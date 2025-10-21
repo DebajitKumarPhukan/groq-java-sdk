@@ -286,16 +286,16 @@ try {
 #### Contributing
 We welcome contributions from the community! Here's how you can help:
 
-#####1. Fork the repository
+1. Fork the repository
 ```bash
 git clone https://github.com/your-username/groq-java-sdk.git
 cd groq-java-sdk
 ```
-#####2. Build the project
+2. Build the project
 ```bash
 mvn clean compile
 ```
-#####3. Run tests
+3. Run tests
 ```bash
 mvn test
 ```

@@ -52,10 +52,11 @@ jobs:
             </servers>
           </settings>" > ~/.m2/settings.xml
 
-      - name: Build and deploy
-        run: mvn clean deploy --settings .github/maven/settings.xml --batch-mode
+      - name: Build and deploy to Maven Central
+        run: mvn clean deploy -B -P release
         env:
-          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
-          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+          GPG_TTY: ${{ secrets.GPG_TTY }}
+          MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
           SONATYPE_TOKEN: ${{ secrets.SONATYPE_TOKEN }}

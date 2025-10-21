@@ -1,0 +1,13 @@
+com\groq\sdk\models\chat\ChatToolTest.class
+com\groq\sdk\util\JsonUtilsTest.class
+com\groq\sdk\core\BaseClientTest$TestBaseClient.class
+com\groq\sdk\models\chat\FunctionDefinitionTest.class
+com\groq\sdk\core\BaseClientTest.class
+com\groq\sdk\models\chat\ChatMessageTest.class
+com\groq\sdk\exceptions\GroqExceptionTest.class
+com\groq\sdk\models\chat\ChatCompletionRequestTest.class
+com\groq\sdk\client\GroqClientTest.class
+com\groq\sdk\resources\ChatResourceTest.class
+com\groq\sdk\core\BaseClientTest$TestBuilder.class
+com\groq\sdk\models\chat\ChatToolCallTest.class
+com\groq\sdk\models\chat\ChatNamedToolChoiceTest.class

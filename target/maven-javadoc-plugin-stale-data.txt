@@ -1,0 +1,81 @@
+-Xdoclint:none
+-Xdoclint:-missing
+-Xdoclint:-accessibility
+@options
+@packages
+-classpath
+'C:/Users/D K_Phukan/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.15.2/jackson-core-2.15.2.jar;C:/Users/D K_Phukan/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.15.2/jackson-databind-2.15.2.jar;C:/Users/D K_Phukan/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.15.2/jackson-annotations-2.15.2.jar;C:/Users/D K_Phukan/.m2/repository/com/fasterxml/jackson/datatype/jackson-datatype-jsr310/2.15.2/jackson-datatype-jsr310-2.15.2.jar;C:/Users/D K_Phukan/.m2/repository/com/squareup/okhttp3/okhttp/4.11.0/okhttp-4.11.0.jar;C:/Users/D K_Phukan/.m2/repository/com/squareup/okio/okio/3.2.0/okio-3.2.0.jar;C:/Users/D K_Phukan/.m2/repository/com/squareup/okio/okio-jvm/3.2.0/okio-jvm-3.2.0.jar;C:/Users/D K_Phukan/.m2/repository/org/jetbrains/kotlin/kotlin-stdlib/1.6.20/kotlin-stdlib-1.6.20.jar;C:/Users/D K_Phukan/.m2/repository/org/jetbrains/kotlin/kotlin-stdlib-common/1.6.20/kotlin-stdlib-common-1.6.20.jar;C:/Users/D K_Phukan/.m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.6.20/kotlin-stdlib-jdk8-1.6.20.jar;C:/Users/D K_Phukan/.m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.6.20/kotlin-stdlib-jdk7-1.6.20.jar;C:/Users/D K_Phukan/.m2/repository/com/squareup/okhttp3/logging-interceptor/4.11.0/logging-interceptor-4.11.0.jar;C:/Users/D K_Phukan/.m2/repository/org/jetbrains/annotations/24.0.1/annotations-24.0.1.jar'
+-encoding
+'UTF-8'
+-protected
+-quiet
+-source
+'21'
+-sourcepath
+'G:/SPRING SUITE ECLIPSE/MY-GROQ-JAVA-WORKSPACE/groq-java-sdk/src/main/java;G:/SPRING SUITE ECLIPSE/MY-GROQ-JAVA-WORKSPACE/groq-java-sdk/target/generated-sources/annotations'
+-author
+-bottom
+'Copyright &#169; 2025. All rights reserved.'
+-charset
+'UTF-8'
+-d
+'G:/SPRING SUITE ECLIPSE/MY-GROQ-JAVA-WORKSPACE/groq-java-sdk/target/apidocs'
+-docencoding
+'UTF-8'
+-Xdoclint:none
+-doctitle
+'Groq Java SDK 1.0.0 API'
+-use
+-version
+-windowtitle
+'Groq Java SDK 1.0.0 API'
+com.groq.sdk.client
+com.groq.sdk.core
+com.groq.sdk.examples
+com.groq.sdk.exceptions
+com.groq.sdk.models.audio
+com.groq.sdk.models.batches
+com.groq.sdk.models.chat
+com.groq.sdk.models.embeddings
+com.groq.sdk.models.files
+com.groq.sdk.models
+com.groq.sdk.models.models
+com.groq.sdk.resources
+com.groq.sdk.util
+C:\Users\D K_Phukan\.m2\repository\com\fasterxml\jackson\core\jackson-core\2.15.2\jackson-core-2.15.2.jar = 1689670910212
+C:\Users\D K_Phukan\.m2\repository\com\fasterxml\jackson\core\jackson-databind\2.15.2\jackson-databind-2.15.2.jar = 1689670950761
+C:\Users\D K_Phukan\.m2\repository\com\fasterxml\jackson\core\jackson-annotations\2.15.2\jackson-annotations-2.15.2.jar = 1689670913498
+C:\Users\D K_Phukan\.m2\repository\com\fasterxml\jackson\datatype\jackson-datatype-jsr310\2.15.2\jackson-datatype-jsr310-2.15.2.jar = 1689671000072
+C:\Users\D K_Phukan\.m2\repository\com\squareup\okhttp3\okhttp\4.11.0\okhttp-4.11.0.jar = 1760988325672
+C:\Users\D K_Phukan\.m2\repository\com\squareup\okio\okio\3.2.0\okio-3.2.0.jar = 1760988325746
+C:\Users\D K_Phukan\.m2\repository\com\squareup\okio\okio-jvm\3.2.0\okio-jvm-3.2.0.jar = 1760988326015
+C:\Users\D K_Phukan\.m2\repository\org\jetbrains\kotlin\kotlin-stdlib\1.6.20\kotlin-stdlib-1.6.20.jar = 1760988326244
+C:\Users\D K_Phukan\.m2\repository\org\jetbrains\kotlin\kotlin-stdlib-common\1.6.20\kotlin-stdlib-common-1.6.20.jar = 1760988326246
+C:\Users\D K_Phukan\.m2\repository\org\jetbrains\kotlin\kotlin-stdlib-jdk8\1.6.20\kotlin-stdlib-jdk8-1.6.20.jar = 1760988325816
+C:\Users\D K_Phukan\.m2\repository\org\jetbrains\kotlin\kotlin-stdlib-jdk7\1.6.20\kotlin-stdlib-jdk7-1.6.20.jar = 1760988325868
+C:\Users\D K_Phukan\.m2\repository\com\squareup\okhttp3\logging-interceptor\4.11.0\logging-interceptor-4.11.0.jar = 1760988325876
+C:\Users\D K_Phukan\.m2\repository\org\jetbrains\annotations\24.0.1\annotations-24.0.1.jar = 1761028031989
+G:\SPRING SUITE ECLIPSE\MY-GROQ-JAVA-WORKSPACE\groq-java-sdk\src\main\java = 1760988311358
+G:\SPRING SUITE ECLIPSE\MY-GROQ-JAVA-WORKSPACE\groq-java-sdk\target\generated-sources\annotations = 1761058117167
+G:\SPRING SUITE ECLIPSE\MY-GROQ-JAVA-WORKSPACE\groq-java-sdk\target\apidocs\allclasses-index.html = 1761058138097
+G:\SPRING SUITE ECLIPSE\MY-GROQ-JAVA-WORKSPACE\groq-java-sdk\target\apidocs\allpackages-index.html = 1761058138099
+G:\SPRING SUITE ECLIPSE\MY-GROQ-JAVA-WORKSPACE\groq-java-sdk\target\apidocs\constant-values.html = 1761058137962
+G:\SPRING SUITE ECLIPSE\MY-GROQ-JAVA-WORKSPACE\groq-java-sdk\target\apidocs\copy.svg = 1761058138131
+G:\SPRING SUITE ECLIPSE\MY-GROQ-JAVA-WORKSPACE\groq-java-sdk\target\apidocs\element-list = 1761058137919
+G:\SPRING SUITE ECLIPSE\MY-GROQ-JAVA-WORKSPACE\groq-java-sdk\target\apidocs\help-doc.html = 1761058138128
+G:\SPRING SUITE ECLIPSE\MY-GROQ-JAVA-WORKSPACE\groq-java-sdk\target\apidocs\index-all.html = 1761058138123
+G:\SPRING SUITE ECLIPSE\MY-GROQ-JAVA-WORKSPACE\groq-java-sdk\target\apidocs\index.html = 1761058138073
+G:\SPRING SUITE ECLIPSE\MY-GROQ-JAVA-WORKSPACE\groq-java-sdk\target\apidocs\link.svg = 1761058138131
+G:\SPRING SUITE ECLIPSE\MY-GROQ-JAVA-WORKSPACE\groq-java-sdk\target\apidocs\member-search-index.js = 1761058138102
+G:\SPRING SUITE ECLIPSE\MY-GROQ-JAVA-WORKSPACE\groq-java-sdk\target\apidocs\module-search-index.js = 1761058138099
+G:\SPRING SUITE ECLIPSE\MY-GROQ-JAVA-WORKSPACE\groq-java-sdk\target\apidocs\overview-summary.html = 1761058138126
+G:\SPRING SUITE ECLIPSE\MY-GROQ-JAVA-WORKSPACE\groq-java-sdk\target\apidocs\overview-tree.html = 1761058138067
+G:\SPRING SUITE ECLIPSE\MY-GROQ-JAVA-WORKSPACE\groq-java-sdk\target\apidocs\package-search-index.js = 1761058138100
+G:\SPRING SUITE ECLIPSE\MY-GROQ-JAVA-WORKSPACE\groq-java-sdk\target\apidocs\script.js = 1761058138130
+G:\SPRING SUITE ECLIPSE\MY-GROQ-JAVA-WORKSPACE\groq-java-sdk\target\apidocs\search-page.js = 1761058138133
+G:\SPRING SUITE ECLIPSE\MY-GROQ-JAVA-WORKSPACE\groq-java-sdk\target\apidocs\search.html = 1761058138125
+G:\SPRING SUITE ECLIPSE\MY-GROQ-JAVA-WORKSPACE\groq-java-sdk\target\apidocs\search.js = 1761058138132
+G:\SPRING SUITE ECLIPSE\MY-GROQ-JAVA-WORKSPACE\groq-java-sdk\target\apidocs\serialized-form.html = 1761058137968
+G:\SPRING SUITE ECLIPSE\MY-GROQ-JAVA-WORKSPACE\groq-java-sdk\target\apidocs\stylesheet.css = 1761058138129
+G:\SPRING SUITE ECLIPSE\MY-GROQ-JAVA-WORKSPACE\groq-java-sdk\target\apidocs\tag-search-index.js = 1761058138102
+G:\SPRING SUITE ECLIPSE\MY-GROQ-JAVA-WORKSPACE\groq-java-sdk\target\apidocs\type-search-index.js = 1761058138100

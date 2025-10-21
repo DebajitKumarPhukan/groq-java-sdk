@@ -231,13 +231,26 @@
 					</execution>
 				</executions>
 			</plugin>
+			<plugin>
+				<groupId>org.sonatype.plugins</groupId>
+				<artifactId>nexus-staging-maven-plugin</artifactId>
+				<version>1.6.8</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>deploy</goal>
+							<goal>release</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
 	</build>
 
 	<distributionManagement>
 		<repository>
-			<id>sonatype</id>
-			<name>Sonatype OSSRH</name>
+			<id>central</id>
+			<name>Maven Central Repository</name>
 			<url>
 				https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
 		</repository>

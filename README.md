@@ -23,7 +23,7 @@ The Groq Java SDK is a comprehensive client library that enables Java developers
 
 ```xml
 <dependency>
-    <groupId>com.groq</groupId>
+    <groupId>io.github.debajitkumarphukan</groupId>
     <artifactId>groq-java-sdk</artifactId>
     <version>1.0.0</version>
 </dependency>

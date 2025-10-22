@@ -35,7 +35,8 @@ jobs:
           server-password: MAVEN_PASSWORD
           gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
           gpg-passphrase: MAVEN_GPG_PASSPHRASE
-
+      - name: Run Maven tests and generate reports
+        run: mvn test
       - name: Publish package
         run: mvn -P release --batch-mode deploy -DskipTests
         env:

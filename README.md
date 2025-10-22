@@ -1,5 +1,5 @@
 # Groq Java SDK
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/DebajitKumarPhukan/groq-java-sdk) ![Maven Central Version](https://img.shields.io/maven-central/v/io.github.debajitkumarphukan/groq-java-sdk)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/DebajitKumarPhukan/groq-java-sdk) ![Maven Central Version](https://img.shields.io/maven-central/v/io.github.debajitkumarphukan/groq-java-sdk) ![Endpoint Badge](https://img.shields.io/endpoint?url=https%3A%2F%2Fgist.github.com%2FDebajitKumarPhukan%2Fefb21c4d837a7ce49ba999f054185308&label=JUnit)
 
 A modern, type-safe Java SDK for interacting with the Groq API, providing seamless access to large language models with ultra-low latency inference.
 

@@ -1,6 +1,8 @@
 # Groq Java SDK
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/DebajitKumarPhukan/groq-java-sdk) ![Maven Central Version](https://img.shields.io/maven-central/v/io.github.debajitkumarphukan/groq-java-sdk)
 
 A modern, type-safe Java SDK for interacting with the Groq API, providing seamless access to large language models with ultra-low latency inference.
+
 
 ## Overview
 
@@ -28,8 +30,12 @@ The Groq Java SDK is a comprehensive client library that enables Java developers
     <version>1.0.0</version>
 </dependency>
 ```
+#### Gradle Dependency
 
-#### Basic Usage
+```xml
+implementation group: 'io.github.debajitkumarphukan', name: 'groq-java-sdk', version: '1.0.0'
+```
+### Basic Usage
 
 ```java
 import com.groq.sdk.client.GroqClient;
@@ -234,17 +240,17 @@ groq-java-sdk/
 ```
 ### API Resources
 #### Available Resources
-* client.chat() - Chat completions and conversations with tool calling support
+* `client.chat()` - Chat completions and conversations with tool calling support
 
-* client.embeddings() - Text embedding generation
+* `client.embeddings()` - Text embedding generation
 
-* client.audio() - Speech synthesis and transcription
+* `client.audio()` - Speech synthesis and transcription
 
-* client.batches() - Batch processing operations
+* `client.batches()` - Batch processing operations
 
-* client.files() - File upload and management
+* `client.files()` - File upload and management
 
-* client.models() - Model information and listing
+* `client.models()` - Model information and listing
 
 #### Tool Calling Features
 * Automatic Tool Selection: Model chooses which tools to use based on context
@@ -300,7 +306,7 @@ mvn clean compile
 mvn test
 ```
 ### Contribution Guidelines
-#####🐛 Reporting Bugs
+##### 🐛 Reporting Bugs
 * Open an issue with the "[ISSUE]" at the beginning of the subject line
 
 * Use the GitHub issue tracker
@@ -311,14 +317,14 @@ mvn test
 
 * Specify your Java version and environment
 
-#####💡 Feature Requests
+##### 💡 Feature Requests
 * Open an issue with the "[ENHANCEMENT]" at the beginning of the subject line
 
 * Describe the use case and expected behavior
 
 * Consider if it aligns with the SDK's scope
 
-#####🔧 Code Contributions
+##### 🔧 Code Contributions
 * Follow the code style
 
 * Use 4-space indentation
@@ -351,7 +357,7 @@ mvn test
 
 * Provide clear implementation details
 
-#####📝 Code Review Process
+##### 📝 Code Review Process
 * All PRs require review from maintainers
 
 * Address review comments promptly
@@ -360,27 +366,27 @@ mvn test
 
 * Squash commits before merging
 
-####Development Dependencies
+#### Development Dependencies
 * Java 21 or higher
 
 * Maven 3.6+
 
 * Groq API key (for integration tests)
 
-####Running the Demo
+#### Running the Demo
 ```bash
 export GROQ_API_KEY="your-api-key"
 mvn compile exec:java -Dexec.mainClass="com.groq.sdk.examples.Example"
 ```
-####License
-This project is licensed under the Apache 2.0 License - see the LICENSE file for details.
+#### License
+This project is licensed under the Apache 2.0 License - see the [LICENSE](https://github.com/DebajitKumarPhukan/groq-java-sdk/blob/master/LICENSE.txt) file for details.
 
-####Support
+#### Support
 📚 API Documentation
 
 🐛 Report Issues
 
 💬 Community Discussions
 
-####Author
+#### Author
 Project led and maintained by Debajit Kumar Phukan

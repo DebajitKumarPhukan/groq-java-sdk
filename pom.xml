@@ -6,7 +6,7 @@
 
 	<groupId>io.github.debajitkumarphukan</groupId>
 	<artifactId>groq-java-sdk</artifactId>
-	<version>1.0.0</version>
+	<version>1.0.1</version>
 	<packaging>jar</packaging>
 
 	<name>Groq Java SDK</name>
@@ -36,9 +36,9 @@
 		<maven.compiler.source>21</maven.compiler.source>
 		<maven.compiler.target>21</maven.compiler.target>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<jackson.version>2.15.2</jackson.version>
-		<okhttp.version>4.11.0</okhttp.version>
-		<junit.version>5.10.0</junit.version>
+		<jackson.version>2.19.2</jackson.version>
+		<okhttp.version>5.2.1</okhttp.version>
+		<junit.version>5.14.0</junit.version>
 		<mockito.version>5.5.0</mockito.version>
 		<maven.surefire.version>3.1.2</maven.surefire.version>
 		<!-- Set to true to skip Javadoc generation -->

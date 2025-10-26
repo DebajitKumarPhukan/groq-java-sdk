@@ -435,8 +435,6 @@ try {
 
 * `whisper-large-v3` - Latest Whisper model for translation
 
-* `whisper-large-v2` - Previous Whisper model
-
 #### Supported Voices
 * `Aaliyah-PlayAI, Adelaide-PlayAI, Angelo-PlayAI, Arista-PlayAI, Atlas-PlayAI`
 

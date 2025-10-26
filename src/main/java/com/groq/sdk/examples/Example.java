@@ -1,5 +1,10 @@
 package com.groq.sdk.examples;
 
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -9,11 +14,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Stack;
-import java.util.regex.Pattern;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.groq.sdk.client.GroqClient;
 import com.groq.sdk.models.GroqResponse;
+import com.groq.sdk.models.audio.SpeechRequest;
+import com.groq.sdk.models.audio.SpeechResponse;
+import com.groq.sdk.models.audio.Transcription;
+import com.groq.sdk.models.audio.TranscriptionRequest;
+import com.groq.sdk.models.audio.Translation;
+import com.groq.sdk.models.audio.TranslationRequest;
+import com.groq.sdk.models.batches.Batch;
+import com.groq.sdk.models.batches.BatchCreateRequest;
+import com.groq.sdk.models.batches.BatchList;
+import com.groq.sdk.models.chat.ChatChoice;
 import com.groq.sdk.models.chat.ChatCompletion;
 import com.groq.sdk.models.chat.ChatCompletionRequest;
 import com.groq.sdk.models.chat.ChatMessage;
@@ -23,7 +38,10 @@ import com.groq.sdk.models.chat.ChatToolCall;
 import com.groq.sdk.models.chat.FunctionDefinition;
 import com.groq.sdk.models.embeddings.EmbeddingRequest;
 import com.groq.sdk.models.embeddings.EmbeddingResponse;
+import com.groq.sdk.models.files.FileList;
+import com.groq.sdk.models.files.FileUploadRequest;
 import com.groq.sdk.models.models.ModelList;
+import com.groq.sdk.models.vision.VisionRequest;
 
 /**
  * Main class demonstrating the usage of Groq Java SDK.
@@ -43,6 +61,9 @@ public class Example {
     private static final String TOOL_MODEL = "llama-3.3-70b-versatile";
     private static final ObjectMapper objectMapper = new ObjectMapper();
     
+    // Audio output directory
+    private static final String AUDIO_OUTPUT_DIR = "src/main/resources/output";
+    
     // Mock weather data for demonstration
     private static final Map<String, WeatherData> WEATHER_DATA = Map.of(
         "san francisco", new WeatherData(18.0, "celsius", "partly cloudy", 65, 15.2),
@@ -51,22 +72,28 @@ public class Example {
         "tokyo", new WeatherData(25.0, "celsius", "clear", 60, 12.7),
         "sydney", new WeatherData(28.0, "celsius", "sunny", 45, 20.1)
     );
-    
-    // Regular expression patterns for calculator
-    private static final Pattern NUMBER_PATTERN = Pattern.compile("-?\\d+(?:\\.\\d+)?");
-    private static final Pattern OPERATOR_PATTERN = Pattern.compile("[+\\-*/]");
-    private static final Pattern EXPRESSION_PATTERN = Pattern.compile("-?\\d+(?:\\.\\d+)?|[+\\-*/()]");
-    
+          
     public static void main(String[] args) {
         try {
             System.out.println("=== Groq Java SDK Demo ===");            
+            
+            // Create audio output directory
+            createAudioOutputDirectory();
+            
             GroqClient client = initializeClient();
+            
             // Demonstrate all functionalities
             demonstrateChatCompletions(client);
-            demonstrateToolCalls(client);
-            demonstrateEmbeddings(client);
-            demonstrateModelListing(client);
-            demonstrateErrorHandling(client);
+            demonstrateReasoning(client);
+            demonstrateReasoningWithTools(client);
+//            demonstrateVisionOperations(client);
+//            demonstrateToolCalls(client);
+//            demonstrateEmbeddings(client);
+//            demonstrateModelListing(client);
+//            demonstrateAudioOperations(client);
+//            demonstrateBatchOperations(client);
+//            demonstrateFileOperations(client);
+//            demonstrateErrorHandling(client);
             
             // Interactive demo
             runInteractiveDemo(client);            
@@ -74,6 +101,64 @@ public class Example {
             System.err.println("Fatal error in demo: " + e.getMessage());
             e.printStackTrace();
         }
+    }
+    
+    /**
+     * Creates the audio output directory if it doesn't exist.
+     */
+    private static void createAudioOutputDirectory() {
+        try {
+            Path outputPath = Paths.get(AUDIO_OUTPUT_DIR);
+            if (!Files.exists(outputPath)) {
+                Files.createDirectories(outputPath);
+                System.out.println("✓ Created audio output directory: " + outputPath.toAbsolutePath());
+            }
+        } catch (IOException e) {
+            System.err.println("✗ Failed to create audio output directory: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Saves audio data to a file in the output directory.
+     * 
+     * @param audioData the audio data bytes
+     * @param filename the filename to save as
+     * @param format the audio format (mp3, wav, etc.)
+     * @return the full path to the saved file, or null if failed
+     */
+    private static String saveAudioToFile(byte[] audioData, String filename, String format) {
+        try {
+            // Ensure filename has proper extension
+            if (!filename.toLowerCase().endsWith("." + format.toLowerCase())) {
+                filename = filename + "." + format;
+            }
+            
+            Path filePath = Paths.get(AUDIO_OUTPUT_DIR, filename);
+            
+            try (FileOutputStream fos = new FileOutputStream(filePath.toFile())) {
+                fos.write(audioData);
+            }
+            
+            System.out.println("✓ Audio saved to: " + filePath.toAbsolutePath());
+            return filePath.toAbsolutePath().toString();
+            
+        } catch (IOException e) {
+            System.err.println("✗ Failed to save audio file: " + e.getMessage());
+            return null;
+        }
+    }
+    
+    /**
+     * Generates a timestamped filename for audio files.
+     * 
+     * @param prefix the filename prefix
+     * @param format the audio format
+     * @return a timestamped filename
+     */
+    private static String generateTimestampedFilename(String prefix, String format) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss_SSS");
+        String timestamp = LocalDateTime.now().format(formatter);
+        return prefix + "_" + timestamp + "." + format;
     }
     
     /**
@@ -435,7 +520,7 @@ public class Example {
      */
     private static String getWeather(String arguments) throws Exception {
     	System.out.println("Real getWeather() executed.");
-        Map<String, Object> params = objectMapper.readValue(arguments, Map.class);
+        Map<String, Object> params = objectMapper.readValue(arguments, new TypeReference<Map<String, Object>>() {});
         String location = ((String) params.get("location")).toLowerCase();
         String unit = params.containsKey("unit") ? (String) params.get("unit") : "celsius";
         
@@ -475,7 +560,7 @@ public class Example {
      */
     private static String calculate(String arguments) throws Exception {
     	System.out.println("Real calculate() executed.");
-        Map<String, Object> params = objectMapper.readValue(arguments, Map.class);
+        Map<String, Object> params = objectMapper.readValue(arguments, new TypeReference<Map<String, Object>>() {});
         String expression = (String) params.get("expression");
         
         try {
@@ -623,7 +708,7 @@ public class Example {
      */
     private static String getCurrentTime(String arguments) throws Exception {
     	System.out.println("Real getCurrentTime() executed.");
-        Map<String, Object> params = objectMapper.readValue(arguments, Map.class);
+        Map<String, Object> params = objectMapper.readValue(arguments,  new TypeReference<Map<String, Object>>() {});
         String location = ((String) params.get("location")).toLowerCase();
         
         // Map locations to timezones
@@ -845,11 +930,14 @@ public class Example {
         System.out.println("Special commands:");
         System.out.println("  'tools on' - Enable tool calls");
         System.out.println("  'tools off' - Disable tool calls");
+        System.out.println("  'reasoning on' - Enable reasoning");
+        System.out.println("  'reasoning off' - Disable reasoning"); // NEW
         System.out.println("  'real tools' - Use real tool execution (default: simulated)");
         System.out.println("  'sim tools' - Use simulated tool execution");
         
         Scanner scanner = new Scanner(System.in);
         boolean toolsEnabled = false;
+        boolean reasoningEnabled = false; // NEW
         boolean useRealTools = false;
         List<ChatTool> interactiveTools = null;
         
@@ -878,6 +966,18 @@ public class Example {
             if (userInput.equalsIgnoreCase("tools off")) {
                 toolsEnabled = false;
                 System.out.println("AI: Tool calls disabled.");
+                continue;
+            }
+            
+            if (userInput.equalsIgnoreCase("reasoning on")) { // NEW
+                reasoningEnabled = true;
+                System.out.println("AI: Reasoning enabled. I will show my thought process.");
+                continue;
+            }
+            
+            if (userInput.equalsIgnoreCase("reasoning off")) { // NEW
+                reasoningEnabled = false;
+                System.out.println("AI: Reasoning disabled.");
                 continue;
             }
             
@@ -911,11 +1011,22 @@ public class Example {
                     request.setToolChoice("auto");
                 }
                 
+                if (reasoningEnabled) { // NEW
+                    request.setIncludeReasoning(true);
+//                    request.setReasoningFormat("parsed");
+                }
+                
                 System.out.print("AI: ");
                 GroqResponse<ChatCompletion> response = client.chat().createCompletion(request);
                 
                 if (response.isSuccessful()) {
                     ChatMessage assistantMessage = response.getData().getChoices().get(0).getMessage();
+                    
+                    // NEW: Display reasoning if available
+                    if (reasoningEnabled && assistantMessage.getReasoning() != null && 
+                        !assistantMessage.getReasoning().isEmpty()) {
+                        System.out.println("[Reasoning: " + assistantMessage.getReasoning() + "]");
+                    }
                     
                     if (toolsEnabled && assistantMessage.getToolCalls() != null && 
                         !assistantMessage.getToolCalls().isEmpty()) {
@@ -951,5 +1062,1005 @@ public class Example {
         
         scanner.close();
         System.out.println("Demo completed. Thank you!");
+    }
+    
+    /**
+     * Demonstrates the latest audio operations including text-to-speech and speech-to-text.
+     * 
+     * @param client the GroqClient instance to use for API calls
+     */
+    private static void demonstrateAudioOperations(GroqClient client) {
+        System.out.println("\n=== Audio Operations Demo (Latest Features) ===");
+        
+        // Demo 1: Standard TTS with different PlayAI voices
+        System.out.println("1. Standard Text-to-Speech:");
+//        demonstrateStandardTTS(client);
+        
+        // Demo 2: PlayAI TTS with enhanced features
+        System.out.println("\n2. PlayAI TTS (High Quality):");
+//        demonstratePlayAITTS(client);
+        
+        // Demo 3: TTS with different formats and speeds
+        System.out.println("\n3. Advanced TTS Configuration:");
+//        demonstrateAdvancedTTS(client);
+        
+     // Demo 4: Speech-to-Text Transcription
+        System.out.println("\n4. Speech-to-Text Transcription:");
+        demonstrateTranscription(client);
+        
+        // Demo 5: Audio Translation
+        System.out.println("\n5. Audio Translation:");
+        demonstrateTranslation(client);
+    }
+
+    /**
+     * Demonstrates standard text-to-speech with different PlayAI voices.
+     */
+    private static void demonstrateStandardTTS(GroqClient client) {
+        try {
+            // Use popular voices for demonstration
+            String[] voicesToTry = client.audio().getPopularVoices();
+            String sampleText = "Hello ! This is a demonstration of Groq's text to speech capabilities.";
+            
+            for (String voice : voicesToTry) {
+                try {
+                    SpeechRequest request = new SpeechRequest();
+                    request.setModel("playai-tts");
+                    request.setInput(sampleText);
+                    request.setVoice(voice);
+                    request.setResponseFormat("mp3");
+                    request.setSpeed(1.0);
+                    
+                    System.out.println("  Trying voice: " + voice);
+                    GroqResponse<SpeechResponse> response = client.audio().createSpeech(request);
+                    
+                    if (response.isSuccessful()) {
+                        SpeechResponse speechResponse = response.getData();
+                        System.out.println("  ✓ " + voice + ": Generated " + 
+                                         speechResponse.getAudio().length + " bytes of audio");
+                        
+                        // Save the audio file
+                        String filename = generateTimestampedFilename("voice_" + voice.replace("-", "_"), "mp3");
+                        String savedPath = saveAudioToFile(speechResponse.getAudio(), filename, "mp3");
+                        
+                        if (savedPath != null) {
+                            System.out.println("  ✓ Saved as: " + filename);
+                        }
+                    } else {
+                        System.err.println("  ✗ " + voice + " failed with status: " + response.getStatusCode());
+                    }
+                    
+                } catch (Exception e) {
+                    System.err.println("  ✗ " + voice + " error: " + e.getMessage());
+                }
+            }
+            
+        } catch (Exception e) {
+            System.err.println("✗ Standard TTS demo error: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Demonstrates PlayAI TTS with high-quality features.
+     */
+    private static void demonstratePlayAITTS(GroqClient client) {
+        try {
+            String sampleText = "Hello ! This is a demonstration of of Groq's text to AI speech capabilities.";
+            
+            SpeechRequest request = new SpeechRequest();
+            request.setModel("playai-tts");
+            request.setInput(sampleText);
+            request.setVoice("Fritz-PlayAI");
+            request.setResponseFormat("mp3");
+            request.setSpeed(1.2); // Slightly faster than normal
+            
+            GroqResponse<SpeechResponse> response = client.audio().createSpeech(request);
+            
+            if (response.isSuccessful()) {
+                SpeechResponse speechResponse = response.getData();
+                System.out.println("✓ PlayAI TTS successful!");
+                System.out.println("✓ Generated " + speechResponse.getAudio().length + " bytes of high-quality audio");
+                System.out.println("✓ Voice: Fritz-PlayAI");
+                System.out.println("✓ Speed: 1.2x");
+                
+                // Save the audio file
+                String filename = generateTimestampedFilename("playai_high_quality", "mp3");
+                String savedPath = saveAudioToFile(speechResponse.getAudio(), filename, "mp3");
+                
+                if (savedPath != null) {
+                    System.out.println("✓ Saved as: " + filename);
+                }
+            } else {
+                System.err.println("✗ PlayAI TTS failed with status: " + response.getStatusCode());
+            }
+            
+        } catch (Exception e) {
+            System.err.println("✗ PlayAI TTS error: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Demonstrates advanced TTS configurations.
+     */
+    private static void demonstrateAdvancedTTS(GroqClient client) {
+        try {
+            String sampleText = "This demonstrates Groq's different audio formats and speech speeds.";
+            String testVoice = "Jennifer-PlayAI";
+            
+            // Test different speeds
+            Double[] speeds = {0.5, 1.0, 1.5, 2.0};
+            for (Double speed : speeds) {
+                try {
+                    SpeechRequest request = new SpeechRequest();
+                    request.setModel("playai-tts");
+                    request.setInput(sampleText);
+                    request.setVoice(testVoice);
+                    request.setResponseFormat("mp3");
+                    request.setSpeed(speed);
+                    
+                    GroqResponse<SpeechResponse> response = client.audio().createSpeech(request);
+                    
+                    if (response.isSuccessful()) {
+                        SpeechResponse speechResponse = response.getData();
+                        System.out.println("✓ Speed " + speed + "x: Success - " + 
+                                         speechResponse.getAudio().length + " bytes");
+                        
+                        // Save the audio file
+                        String filename = generateTimestampedFilename(
+                            "speed_" + speed + "x_" + testVoice.replace("-", "_"), "mp3");
+                        String savedPath = saveAudioToFile(speechResponse.getAudio(), filename, "mp3");
+                        
+                        if (savedPath != null) {
+                            System.out.println("  ✓ Saved as: " + filename);
+                        }
+                    } else {
+                        System.err.println("✗ Speed " + speed + "x failed");
+                    }
+                    
+                } catch (Exception e) {
+                    System.err.println("✗ Speed " + speed + "x error: " + e.getMessage());
+                }
+            }
+            
+            // Test different formats
+            String[] formats = {"mp3", "wav", "flac"};
+            for (String format : formats) {
+                try {
+                    SpeechRequest request = new SpeechRequest();
+                    request.setModel("playai-tts");
+                    request.setInput("Format test: " + format);
+                    request.setVoice(testVoice);
+                    request.setResponseFormat(format);
+                    request.setSpeed(1.0);
+                    
+                    GroqResponse<SpeechResponse> response = client.audio().createSpeech(request);
+                    
+                    if (response.isSuccessful()) {
+                        SpeechResponse speechResponse = response.getData();
+                        System.out.println("✓ Format " + format + ": Success - " + 
+                                         speechResponse.getAudio().length + " bytes");
+                        
+                        // Save the audio file
+                        String filename = generateTimestampedFilename(
+                            "format_" + format + "_" + testVoice.replace("-", "_"), format);
+                        String savedPath = saveAudioToFile(speechResponse.getAudio(), filename, format);
+                        
+                        if (savedPath != null) {
+                            System.out.println("  ✓ Saved as: " + filename);
+                        }
+                    } else {
+                        System.err.println("✗ Format " + format + " failed");
+                    }
+                    
+                } catch (Exception e) {
+                    System.err.println("✗ Format " + format + " error: " + e.getMessage());
+                }
+            }
+            
+        } catch (Exception e) {
+            System.err.println("✗ Advanced TTS demo error: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Demonstrates speech-to-text transcription with actual audio files.
+     * 
+     * @param client the GroqClient instance to use for API calls
+     */
+    private static void demonstrateTranscription(GroqClient client) {
+        try {
+            System.out.println("✓ Speech-to-Text Transcription Demo:");
+            System.out.println("  Note: Transcription converts speech to text in the original language");
+            
+            String[] audioFiles = {
+                "src/main/resources/audio/input_1.mp3",
+                "src/main/resources/audio/input_2.wav"
+            };
+            
+            for (String audioFile : audioFiles) {
+                try {
+                    System.out.println("\n  Processing: " + audioFile);
+                    
+                    Path filePath = Paths.get(audioFile);
+                    
+                    if (!Files.exists(filePath)) {
+                        System.err.println("  ✗ Audio file not found: " + filePath.toAbsolutePath());
+                        System.out.println("  ✓ Please ensure audio files exist at: " + audioFile);
+                        continue;
+                    }
+                    
+                    System.out.println("  ✓ Found audio file: " + filePath.toAbsolutePath());
+                    System.out.println("  ✓ File size: " + Files.size(filePath) + " bytes");
+                    
+                    // Create transcription request with file path
+                    TranscriptionRequest request = new TranscriptionRequest();
+                    request.setModel("whisper-large-v3-turbo");
+                    request.setFile(filePath.toAbsolutePath().toString());
+                    request.setLanguage("en");
+                    request.setResponseFormat("verbose_json");
+                    request.setTemperature(0.0);
+                    request.setPrompt("This is a demonstration of speech recognition.");
+                    
+                    System.out.println("  ✓ Sending transcription request...");
+                    System.out.println("  ✓ Model: " + request.getModel());
+                    System.out.println("  ✓ Language: " + request.getLanguage());
+                    System.out.println("  ✓ Format: " + request.getResponseFormat());
+                    
+                    GroqResponse<Transcription> response = client.audio().createTranscription(request);
+                    
+                    if (response.isSuccessful()) {
+                        Transcription transcription = response.getData();
+                        String transcribedText = transcription.getText();
+                        
+                        System.out.println("  ✓ Transcription successful!");
+                        System.out.println("  ✓ Extracted text: " + transcribedText);
+                        System.out.println("  ✓ Response status: " + response.getStatusCode());
+                        
+                        // Save transcription to file
+                        String transcriptFilename = generateTimestampedFilename(
+                            "transcript_" + filePath.getFileName().toString().replace(".", "_"), "txt");
+                        Path transcriptPath = Paths.get(AUDIO_OUTPUT_DIR, transcriptFilename);
+                        
+                        Files.write(transcriptPath, transcribedText.getBytes());
+                        System.out.println("  ✓ Transcript saved to: " + transcriptPath.toAbsolutePath());
+                        
+                    } else {
+                        System.err.println("  ✗ Transcription failed with status: " + response.getStatusCode());
+                    }
+                    
+                } catch (Exception e) {
+                    System.err.println("  ✗ Error processing " + audioFile + ": " + e.getMessage());
+                    e.printStackTrace();
+                }
+            }            
+            // Demonstrate different transcription configurations
+            System.out.println("\n✓ Advanced Transcription Features:");
+            demonstrateAdvancedTranscription(client);
+        } catch (Exception e) {
+            System.err.println("✗ Transcription demo error: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+    /**
+     * Demonstrates audio translation to Spanish text.
+     * 
+     * @param client the GroqClient instance to use for API calls
+     */
+    private static void demonstrateTranslation(GroqClient client) {
+        try {
+            System.out.println("✓ Audio Translation Demo:");
+            System.out.println("  Note: This demonstrates translating Spanish audio to English text");
+            
+            String[] audioFiles = {
+                "src/main/resources/audio/spanish_input_1.mp3",
+                "src/main/resources/audio/spanish_input_2.wav"
+            };
+            
+            for (String audioFile : audioFiles) {
+                try {
+                    System.out.println("\n  Processing: " + audioFile);
+                    
+                    Path filePath = Paths.get(audioFile);
+                    
+                    if (!Files.exists(filePath)) {
+                        System.err.println("  ✗ Audio file not found: " + filePath.toAbsolutePath());
+                        continue;
+                    }
+                    
+                    System.out.println("  ✓ Found audio file: " + filePath.toAbsolutePath());
+                    System.out.println("  ✓ File size: " + Files.size(filePath) + " bytes");
+                    
+                    // Create translation request with file path
+                    TranslationRequest request = new TranslationRequest();
+                    request.setModel("whisper-large-v3");
+                    request.setFile(filePath.toAbsolutePath().toString());
+                    request.setPrompt("Translate this audio content from Spanish to English. Provide accurate English translation.");
+                    request.setResponseFormat("verbose_json");
+                    request.setTemperature(0.1); // Lower temperature for more consistent translations
+                    request.setLanguage("es");
+                    
+                    System.out.println("  ✓ Sending translation request...");
+                    System.out.println("  ✓ Model: " + request.getModel());
+                    System.out.println("  ✓ Target Language: English");
+                    System.out.println("  ✓ Format: " + request.getResponseFormat());
+                    System.out.println("  ✓ Prompt: " + request.getPrompt());
+                    
+                    GroqResponse<Translation> response = client.audio().createTranslation(request);
+                    
+                    if (response.isSuccessful()) {
+                        Translation translation = response.getData();
+                        String translatedText = translation.getText();
+                        
+                        System.out.println("  ✓ Translation to English successful!");
+                        System.out.println("  ✓ Translated text (English): " + translatedText);
+                        System.out.println("  ✓ Response status: " + response.getStatusCode());
+                        
+                        // Save translation to file
+                        String translationFilename = generateTimestampedFilename(
+                            "translation_es_en_" + filePath.getFileName().toString().replace(".", "_"), "txt");
+                        Path translationPath = Paths.get(AUDIO_OUTPUT_DIR, translationFilename);
+                        
+                        Files.write(translationPath, translatedText.getBytes());
+                        System.out.println("  ✓ Spanish translation saved to: " + translationPath.toAbsolutePath());
+                        
+                    } else {
+                        System.err.println("  ✗ Translation failed with status: " + response.getStatusCode());
+                    }
+                    
+                } catch (Exception e) {
+                    System.err.println("  ✗ Error processing " + audioFile + ": " + e.getMessage());
+                    e.printStackTrace();
+                }
+            }            
+        } catch (Exception e) {
+            System.err.println("✗ Spanish translation demo error: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Demonstrates advanced transcription features with different configurations.
+     * 
+     * @param client the GroqClient instance to use for API calls
+     */
+    private static void demonstrateAdvancedTranscription(GroqClient client) {
+        try {
+            String testAudioFile = "src/main/resources/audio/input_1.mp3";
+            Path filePath = Paths.get(testAudioFile);
+            
+            if (!Files.exists(filePath)) {
+                System.out.println("  ✗ Test audio file not found for advanced features");
+                return;
+            }
+            
+            // Demo 1: Simple text output
+            System.out.println("  1. Simple Text Transcription:");
+            TranscriptionRequest simpleRequest = new TranscriptionRequest();
+            simpleRequest.setModel("whisper-large-v3-turbo");
+            simpleRequest.setFile(filePath.toAbsolutePath().toString());
+            simpleRequest.setResponseFormat("text");
+            
+            GroqResponse<Transcription> simpleResponse = client.audio().createTranscription(simpleRequest);
+            if (simpleResponse.isSuccessful()) {
+                System.out.println("    ✓ Text format: " + 
+                    (simpleResponse.getData().getText() != null ? 
+                     simpleResponse.getData().getText().substring(0, Math.min(100, simpleResponse.getData().getText().length())) + "..." : 
+                     "No text"));
+            }
+            
+            // Demo 2: JSON with timestamps
+            System.out.println("  2. JSON with Timestamps:");
+            TranscriptionRequest jsonRequest = new TranscriptionRequest();
+            jsonRequest.setModel("whisper-large-v3-turbo");
+            jsonRequest.setFile(filePath.toAbsolutePath().toString());
+            jsonRequest.setResponseFormat("verbose_json");
+            
+            GroqResponse<Transcription> jsonResponse = client.audio().createTranscription(jsonRequest);
+            if (jsonResponse.isSuccessful()) {
+                System.out.println("    ✓ JSON format successful");
+                System.out.println("    ✓ Transcribed text length: " + 
+                    (jsonResponse.getData().getText() != null ? jsonResponse.getData().getText().length() : 0));
+            }
+            
+            // Demo 3: Different language specification
+            System.out.println("  3. Language-Specific Transcription:");
+            TranscriptionRequest langRequest = new TranscriptionRequest();
+            langRequest.setModel("whisper-large-v3-turbo");
+            langRequest.setFile(filePath.toAbsolutePath().toString());
+            langRequest.setLanguage("en");
+            langRequest.setResponseFormat("json");
+            
+            GroqResponse<Transcription> langResponse = client.audio().createTranscription(langRequest);
+            if (langResponse.isSuccessful()) {
+                System.out.println("    ✓ Language-specific transcription successful");
+            }
+            
+            // Demo 4: With temperature for variability
+            System.out.println("  4. Transcription with Temperature:");
+            TranscriptionRequest tempRequest = new TranscriptionRequest();
+            tempRequest.setModel("whisper-large-v3-turbo");
+            tempRequest.setFile(filePath.toAbsolutePath().toString());
+            tempRequest.setTemperature(0.5);
+            tempRequest.setResponseFormat("text");
+            
+            GroqResponse<Transcription> tempResponse = client.audio().createTranscription(tempRequest);
+            if (tempResponse.isSuccessful()) {
+                System.out.println("    ✓ Temperature-based transcription successful");
+            }
+            
+            System.out.println("  ✓ Advanced transcription features demonstrated");
+            
+        } catch (Exception e) {
+            System.err.println("  ✗ Advanced transcription error: " + e);
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Demonstrates batch processing operations.
+     * 
+     * @param client the GroqClient instance to use for API calls
+     */
+    private static void demonstrateBatchOperations(GroqClient client) {
+        System.out.println("\n=== Batch Operations Demo ===");
+        
+        // Demo 1: List batches
+        System.out.println("1. List Batches:");
+        demonstrateListBatches(client);
+        
+        // Demo 2: Create batch (conceptual - requires input file)
+        System.out.println("\n2. Batch Creation (Conceptual):");
+        demonstrateBatchCreation(client);
+        
+        // Demo 3: Retrieve batch
+        System.out.println("\n3. Batch Retrieval:");
+        demonstrateBatchRetrieval(client);
+    }
+
+    /**
+     * Demonstrates listing available batches.
+     */
+    private static void demonstrateListBatches(GroqClient client) {
+        try {
+            GroqResponse<BatchList> response = client.batches().list();
+            
+            if (response.isSuccessful()) {
+                BatchList batchList = response.getData();
+                System.out.println("✓ Retrieved " + (batchList.getData() != null ? batchList.getData().size() : 0) + " batches");
+                
+                if (batchList.getData() != null && !batchList.getData().isEmpty()) {
+                    batchList.getData().stream()
+                        .limit(3) // Show first 3 batches
+                        .forEach(batch -> {
+                            System.out.println("  - Batch: " + batch.getId() + 
+                                             " (status: " + batch.getStatus() + ")");
+                            if (batch.getRequestCounts() != null) {
+                                System.out.println("    Total: " + batch.getRequestCounts().getTotal() +
+                                                 ", Completed: " + batch.getRequestCounts().getCompleted() +
+                                                 ", Failed: " + batch.getRequestCounts().getFailed());
+                            }
+                        });
+                } else {
+                    System.out.println("✓ No batches found (this is normal for new accounts)");
+                }
+            } else {
+                System.err.println("✗ Batch listing failed with status: " + response.getStatusCode());
+            }
+            
+        } catch (Exception e) {
+            System.err.println("✗ Batch listing error: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Demonstrates batch creation (conceptual example).
+     */
+    private static void demonstrateBatchCreation(GroqClient client) {
+        try {
+            // Note: Batch creation requires an input file ID which we don't have in this demo
+            // This is a conceptual example showing the request structure
+            BatchCreateRequest request = new BatchCreateRequest();
+            request.setInputFileId("file-abc123"); // This would be a real file ID
+            request.setEndpoint("/v1/chat/completions");
+            request.setCompletionWindow("24h");
+            
+            System.out.println("✓ Batch creation request structure demonstrated");
+            System.out.println("✓ Endpoint: " + request.getEndpoint());
+            System.out.println("✓ Completion window: " + request.getCompletionWindow());
+            System.out.println("✓ In real usage, provide actual input file ID");
+            
+            // Uncomment the following lines when you have actual file IDs:
+            /*
+            GroqResponse<Batch> response = client.batches().create(request);
+            if (response.isSuccessful()) {
+                Batch batch = response.getData();
+                System.out.println("✓ Batch created: " + batch.getId() + " (status: " + batch.getStatus() + ")");
+            }
+            */
+            
+        } catch (Exception e) {
+            System.err.println("✗ Batch creation error: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Demonstrates batch retrieval.
+     */
+    private static void demonstrateBatchRetrieval(GroqClient client) {
+        try {
+            // First, list batches to get an ID to retrieve
+            GroqResponse<BatchList> listResponse = client.batches().list();
+            
+            if (listResponse.isSuccessful() && 
+                listResponse.getData().getData() != null && 
+                !listResponse.getData().getData().isEmpty()) {
+                
+                String batchId = listResponse.getData().getData().get(0).getId();
+                GroqResponse<Batch> response = client.batches().retrieve(batchId);
+                
+                if (response.isSuccessful()) {
+                    Batch batch = response.getData();
+                    System.out.println("✓ Retrieved batch: " + batch.getId());
+                    System.out.println("✓ Status: " + batch.getStatus());
+                    System.out.println("✓ Created: " + batch.getCreatedAt());
+                    
+                    if (batch.getRequestCounts() != null) {
+                        System.out.println("✓ Requests: " + batch.getRequestCounts().getTotal() + " total, " +
+                                         batch.getRequestCounts().getCompleted() + " completed, " +
+                                         batch.getRequestCounts().getFailed() + " failed");
+                    }
+                } else {
+                    System.err.println("✗ Batch retrieval failed with status: " + response.getStatusCode());
+                }
+            } else {
+                System.out.println("✓ No batches available to retrieve (this is normal for new accounts)");
+            }
+            
+        } catch (Exception e) {
+            System.err.println("✗ Batch retrieval error: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Demonstrates file operations including upload, list, and retrieval.
+     * 
+     * @param client the GroqClient instance to use for API calls
+     */
+    private static void demonstrateFileOperations(GroqClient client) {
+        System.out.println("\n=== File Operations Demo ===");
+        
+        // Demo 1: List files
+        System.out.println("1. List Files:");
+        demonstrateListFiles(client);
+        
+        // Demo 2: File upload (conceptual)
+        System.out.println("\n2. File Upload (Conceptual):");
+        demonstrateFileUpload(client);
+        
+        // Demo 3: File operations with mock data
+        System.out.println("\n3. File Operations with JSON:");
+        demonstrateFileOperationsWithJson(client);
+    }
+
+    /**
+     * Demonstrates listing available files.
+     */
+    private static void demonstrateListFiles(GroqClient client) {
+        try {
+            GroqResponse<FileList> response = client.files().list();
+            
+            if (response.isSuccessful()) {
+                FileList fileList = response.getData();
+                System.out.println("✓ Retrieved " + (fileList.getData() != null ? fileList.getData().size() : 0) + " files");
+                
+                if (fileList.getData() != null && !fileList.getData().isEmpty()) {
+                    fileList.getData().stream()
+                        .limit(3) // Show first 3 files
+                        .forEach(file -> {
+                            System.out.println("  - File: " + file.getFilename() + 
+                                             " (ID: " + file.getId() + ")");
+                            System.out.println("    Purpose: " + file.getPurpose() +
+                                             ", Size: " + file.getBytes() + " bytes");
+                            System.out.println("    Created: " + file.getCreatedAt() +
+                                             ", Status: " + file.getStatus());
+                        });
+                } else {
+                    System.out.println("✓ No files found (this is normal for new accounts)");
+                }
+            } else {
+                System.err.println("✗ File listing failed with status: " + response.getStatusCode());
+            }
+            
+        } catch (Exception e) {
+            System.err.println("✗ File listing error: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Demonstrates file upload (conceptual example).
+     */
+    private static void demonstrateFileUpload(GroqClient client) {
+        try {
+            // Note: This is a conceptual example showing the request structure
+            // In a real scenario, you would provide actual file content
+            FileUploadRequest request = new FileUploadRequest();
+            request.setFile("[Base64 encoded file content or file path would go here]");
+            request.setPurpose("fine-tune");
+            request.setFilename("training_data.jsonl");
+            
+            System.out.println("✓ File upload request structure demonstrated");
+            System.out.println("✓ Purpose: " + request.getPurpose());
+            System.out.println("✓ Filename: " + request.getFilename());
+            System.out.println("✓ In real usage, provide actual file content");
+            
+            // Uncomment the following lines when you have actual file content:
+            /*
+            GroqResponse<FileObject> response = client.files().upload(request);
+            if (response.isSuccessful()) {
+                FileObject file = response.getData();
+                System.out.println("✓ File uploaded: " + file.getFilename() + " (ID: " + file.getId() + ")");
+            }
+            */
+            
+        } catch (Exception e) {
+            System.err.println("✗ File upload error: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Demonstrates file operations with JSON content.
+     */
+    private static void demonstrateFileOperationsWithJson(GroqClient client) {
+        try {
+            // Create sample JSON content
+            Map<String, Object> sampleData = new HashMap<>();
+            sampleData.put("demo", "Groq Java SDK File Operations");
+            sampleData.put("timestamp", System.currentTimeMillis());
+            sampleData.put("features", Arrays.asList("chat", "embeddings", "audio", "files", "batches"));
+            
+            String jsonContent = objectMapper.writeValueAsString(sampleData);
+            String filename = "groq_sdk_demo_" + System.currentTimeMillis();
+            String purpose = "assistants";
+            
+            System.out.println("✓ Created sample JSON content for upload");
+            System.out.println("✓ JSON size: " + jsonContent.length() + " characters");
+            
+            // Note: Uncomment to actually upload (commented to avoid creating real files in demo)
+            /*
+            GroqResponse<FileObject> uploadResponse = client.files().uploadJson(jsonContent, filename, purpose);
+            if (uploadResponse.isSuccessful()) {
+                FileObject uploadedFile = uploadResponse.getData();
+                System.out.println("✓ JSON file uploaded: " + uploadedFile.getFilename());
+                System.out.println("✓ File ID: " + uploadedFile.getId());
+                
+                // Demonstrate file retrieval
+                GroqResponse<FileObject> retrieveResponse = client.files().retrieve(uploadedFile.getId());
+                if (retrieveResponse.isSuccessful()) {
+                    System.out.println("✓ File retrieved: " + retrieveResponse.getData().getFilename());
+                }
+                
+                // Demonstrate file content retrieval
+                GroqResponse<String> contentResponse = client.files().retrieveContent(uploadedFile.getId());
+                if (contentResponse.isSuccessful()) {
+                    System.out.println("✓ File content retrieved: " + contentResponse.getData().length() + " characters");
+                }
+                
+                // Demonstrate file deletion (commented to avoid actual deletion in demo)
+                // GroqResponse<FileDeleteResponse> deleteResponse = client.files().delete(uploadedFile.getId());
+                // if (deleteResponse.isSuccessful() && deleteResponse.getData().getDeleted()) {
+                //     System.out.println("✓ File deleted successfully");
+                // }
+            }
+            */
+            
+        } catch (Exception e) {
+            System.err.println("✗ File operations with JSON error: " + e.getMessage());
+        }
+    }
+ // Add this method to demonstrate reasoning functionality
+    private static void demonstrateReasoning(GroqClient client) {
+        System.out.println("\n=== Reasoning Demo ===");
+        
+        try {
+            ChatMessage message = new ChatMessage("user", "Solve this math problem step by step: What is 15% of 80?");
+            ChatCompletionRequest request = new ChatCompletionRequest("openai/gpt-oss-120b", Arrays.asList(message));
+            
+            // Enable reasoning
+            request.setIncludeReasoning(true);
+//            request.setReasoningFormat("parsed");
+            request.setMaxTokens(500);
+            
+            GroqResponse<ChatCompletion> response = client.chat().createCompletion(request);
+            
+            if (response.isSuccessful()) {
+                ChatCompletion completion = response.getData();
+                ChatChoice choice = completion.getChoices().get(0);
+                ChatMessage assistantMessage = choice.getMessage();
+                
+                System.out.println("✓ Reasoning response:");
+                
+                // Display reasoning if available
+                if (assistantMessage.getReasoning() != null && !assistantMessage.getReasoning().isEmpty()) {
+                    System.out.println("Reasoning: " + assistantMessage.getReasoning());
+                }
+                
+                // Display content
+                if (assistantMessage.getContent() != null && !assistantMessage.getContent().isEmpty()) {
+                    System.out.println("Content: " + assistantMessage.getContent());
+                }
+                
+                System.out.println("✓ Finish reason: " + choice.getFinishReason());
+                
+            } else {
+                System.err.println("✗ Reasoning demo failed with status: " + response.getStatusCode());
+            }
+            
+        } catch (Exception e) {
+            System.err.println("✗ Reasoning demo error: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    // Add this method to demonstrate reasoning with tools
+    private static void demonstrateReasoningWithTools(GroqClient client) {
+        System.out.println("\n=== Reasoning with Tools Demo ===");
+        
+        try {
+            // Create tools
+            FunctionDefinition calculatorFunction = createCalculatorFunction();
+            ChatTool calculatorTool = new ChatTool("function", calculatorFunction);
+            List<ChatTool> tools = Arrays.asList(calculatorTool);
+            
+            ChatMessage message = new ChatMessage("user", 
+                "I need to calculate the area of a circle with radius 5. " +
+                "Please show your reasoning and use the calculator tool for the calculation.");
+            
+            ChatCompletionRequest request = new ChatCompletionRequest("openai/gpt-oss-120b", Arrays.asList(message));
+            request.setTools(tools);
+            request.setToolChoice("auto");
+            request.setIncludeReasoning(true);
+//            request.setReasoningFormat("parsed");
+            request.setMaxTokens(600);
+            
+            GroqResponse<ChatCompletion> response = client.chat().createCompletion(request);
+            
+            if (response.isSuccessful()) {
+                ChatMessage assistantMessage = response.getData().getChoices().get(0).getMessage();
+                
+                System.out.println("✓ Reasoning with tools:");
+                
+                // Display reasoning
+                if (assistantMessage.getReasoning() != null && !assistantMessage.getReasoning().isEmpty()) {
+                    System.out.println("Reasoning: " + assistantMessage.getReasoning());
+                }
+                
+                // Check for tool calls
+                if (assistantMessage.getToolCalls() != null && !assistantMessage.getToolCalls().isEmpty()) {
+                    System.out.println("Tool calls requested:");
+                    for (ChatToolCall toolCall : assistantMessage.getToolCalls()) {
+                        System.out.println("  - " + toolCall.getFunction().getName() + 
+                                         ": " + toolCall.getFunction().getArguments());
+                        
+                        // Execute tool and continue conversation
+                        String toolResult = realToolExecution(toolCall.getFunction().getName(), 
+                                                             toolCall.getFunction().getArguments());
+                        System.out.println("  - Tool result: " + toolResult);
+                        
+                        // Create tool response message
+                        ChatMessage toolMessage = ChatMessage.createToolMessage(toolCall.getId(), toolResult);
+                        
+                        // Continue conversation with tool result
+                        List<ChatMessage> conversation = Arrays.asList(message, assistantMessage, toolMessage);
+                        ChatCompletionRequest followupRequest = new ChatCompletionRequest(
+                            "openai/gpt-oss-120b", conversation);
+                        followupRequest.setIncludeReasoning(true);
+                        // Enable below when "includeReasoning" is not set.
+                        // followupRequest.setReasoningFormat("parsed");
+                        
+                        GroqResponse<ChatCompletion> followupResponse = client.chat().createCompletion(followupRequest);
+                        
+                        if (followupResponse.isSuccessful()) {
+                            ChatMessage finalMessage = followupResponse.getData().getChoices().get(0).getMessage();
+                            System.out.println("✓ Final response with reasoning:");
+                            if (finalMessage.getReasoning() != null) {
+                                System.out.println("Reasoning: " + finalMessage.getReasoning());
+                            }
+                            System.out.println("Answer: " + finalMessage.getContent());
+                        }
+                    }
+                } else if (assistantMessage.getContent() != null) {
+                    System.out.println("Content: " + assistantMessage.getContent());
+                }
+                
+            } else {
+                System.err.println("✗ Reasoning with tools failed with status: " + response.getStatusCode());
+            }
+            
+        } catch (Exception e) {
+            System.err.println("✗ Reasoning with tools error: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+    /**
+     * Demonstrates vision operations including image analysis with URL, local images, and image bytes.
+     * 
+     * @param client the GroqClient instance to use for API calls
+     */
+    private static void demonstrateVisionOperations(GroqClient client) {
+        System.out.println("\n=== Vision Operations Demo ===");
+        
+        try {
+            String[] visionModels = client.vision().getCommonVisionModels();
+            System.out.println("✓ Available vision models: " + Arrays.toString(visionModels));
+            
+            String visionModel = visionModels[0];
+            System.out.println("✓ Using vision model: " + visionModel);
+            
+            // Demo 1: Using remote URL
+            System.out.println("\n1. Testing with Remote Image URL:");
+            demonstrateRemoteImageAnalysis(client, visionModel);
+            
+            // Demo 2: Using local image
+            System.out.println("\n2. Testing with Local Image:");
+            demonstrateLocalImageAnalysis(client, visionModel);
+            
+            // Demo 3: Using image bytes
+            System.out.println("\n3. Testing with Image Bytes:");
+            demonstrateImageBytesAnalysis(client, visionModel);
+            
+        } catch (Exception e) {
+            System.err.println("✗ Vision operations demo error: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Demonstrates vision analysis with image bytes.
+     */
+    private static void demonstrateImageBytesAnalysis(GroqClient client, String model) {
+        try {
+            Path imagePath = Paths.get("src/main/resources/images/input_2.jpg");
+            
+            if (!Files.exists(imagePath)) {
+                System.out.println("✗ Local image file not found: " + imagePath.toAbsolutePath());
+                System.out.println("✓ Please ensure the image file exists at: src/main/resources/images/input_1.jpg");
+                return;
+            }
+            
+            System.out.println("✓ Using image from: " + imagePath.toAbsolutePath());
+            
+            // Read image as bytes
+            byte[] imageBytes = Files.readAllBytes(imagePath);
+            System.out.println("✓ Read image bytes: " + imageBytes.length + " bytes");
+            
+            String prompt = "What's in this image? Describe it in detail.";
+            String mimeType = "image/jpeg";
+            
+            VisionRequest request = client.vision().createVisionRequestWithImageBytes(
+                model, imageBytes, mimeType, prompt
+            );
+            request.setMaxTokens(500);
+            request.setTemperature(0.1);
+            request.setTopP(1.0);
+            request.setStream(false);
+            
+            GroqResponse<ChatCompletion> response = client.vision().createCompletion(request);
+            
+            if (response.isSuccessful()) {
+                ChatCompletion completion = response.getData();
+                if (completion.getChoices() != null && !completion.getChoices().isEmpty()) {
+                    ChatChoice choice = completion.getChoices().get(0);
+                    if (choice.getMessage() != null && choice.getMessage().getContent() != null) {
+                        String analysis = choice.getMessage().getContent();
+                        System.out.println("✓ Image Bytes Analysis: " + analysis);
+                        System.out.println("✓ Token usage: " + completion.getUsage().getTotalTokens() + " tokens");
+                    } else {
+                        System.out.println("✓ No analysis content received");
+                    }
+                } else {
+                    System.out.println("✓ No choices in response");
+                }
+            } else {
+                System.err.println("✗ Image bytes analysis failed with status: " + response.getStatusCode());
+            }
+            
+        } catch (Exception e) {
+            System.err.println("✗ Image bytes analysis error: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Demonstrates vision analysis with a remote image URL.
+     */
+    private static void demonstrateRemoteImageAnalysis(GroqClient client, String model) {
+        try {
+            String testImageUrl = "https://wallpaperaccess.com/full/5324597.jpg";
+            String prompt = "Who is in the image ?.";
+            
+            System.out.println("✓ Testing with remote URL: " + testImageUrl);
+            
+            VisionRequest request = client.vision().createVisionRequestWithUrl(model, testImageUrl, prompt);
+            request.setMaxTokens(500);
+            request.setTemperature(0.1);
+            request.setTopP(1.0);
+            request.setStream(false);
+            
+            GroqResponse<ChatCompletion> response = client.vision().createCompletion(request);
+            
+            if (response.isSuccessful()) {
+                ChatCompletion completion = response.getData();
+                if (completion.getChoices() != null && !completion.getChoices().isEmpty()) {
+                    ChatChoice choice = completion.getChoices().get(0);
+                    if (choice.getMessage() != null && choice.getMessage().getContent() != null) {
+                        String analysis = choice.getMessage().getContent();
+                        System.out.println("✓ Remote Image Analysis: " + analysis);
+                        System.out.println("✓ Token usage: " + completion.getUsage().getTotalTokens() + " tokens");
+                    } else {
+                        System.out.println("✓ No analysis content received");
+                    }
+                } else {
+                    System.out.println("✓ No choices in response");
+                }
+            } else {
+                System.err.println("✗ Remote image analysis failed with status: " + response.getStatusCode());
+            }
+            
+        } catch (Exception e) {
+            System.err.println("✗ Remote image analysis error: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Demonstrates vision analysis with a local image file.
+     */
+    private static void demonstrateLocalImageAnalysis(GroqClient client, String model) {
+        try {
+            Path imagePath = Paths.get("src/main/resources/images/input_1.jpg");
+            
+            if (!Files.exists(imagePath)) {
+                System.out.println("✗ Local image file not found: " + imagePath.toAbsolutePath());
+                System.out.println("✓ Please ensure the image file exists at: src/main/resources/images/input_1.jpg");
+                return;
+            }
+            
+            System.out.println("✓ Using local image: " + imagePath.toAbsolutePath());
+            
+            String prompt = "What is the text in the image ?.";
+            
+            VisionRequest request = client.vision().createVisionRequestWithLocalImage(
+                model, imagePath.toString(), prompt
+            );
+            request.setMaxTokens(500);
+            request.setTemperature(0.1);
+            request.setTopP(1.0);
+            request.setStream(false);
+            
+            GroqResponse<ChatCompletion> response = client.vision().createCompletion(request);
+            
+            if (response.isSuccessful()) {
+                ChatCompletion completion = response.getData();
+                if (completion.getChoices() != null && !completion.getChoices().isEmpty()) {
+                    ChatChoice choice = completion.getChoices().get(0);
+                    if (choice.getMessage() != null && choice.getMessage().getContent() != null) {
+                        String analysis = choice.getMessage().getContent();
+                        System.out.println("✓ Local Image Analysis: " + analysis);
+                        System.out.println("✓ Token usage: " + completion.getUsage().getTotalTokens() + " tokens");
+                    } else {
+                        System.out.println("✓ No analysis content received");
+                    }
+                } else {
+                    System.out.println("✓ No choices in response");
+                }
+            } else {
+                System.err.println("✗ Local image analysis failed with status: " + response.getStatusCode());
+            }
+            
+        } catch (Exception e) {
+            System.err.println("✗ Local image analysis error: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 }

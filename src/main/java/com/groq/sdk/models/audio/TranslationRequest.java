@@ -3,38 +3,37 @@ package com.groq.sdk.models.audio;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Represents a request for audio transcription.
- * Contains the audio data and transcription parameters.
+ * Represents a request for audio translation.
+ * Contains the audio data and translation parameters to convert audio to English text.
  * 
  * <p><strong>Supported models:</strong></p>
  * <ul>
- *   <li><code>whisper-large-v3</code> - Latest Whisper model for transcription</li>
- *   <li><code>whisper-large-v2</code> - Previous Whisper model</li>
+ *   <li><code>whisper-large-v3</code> - Latest Whisper model for translation</li>
  * </ul>
  * 
  * <p><strong>Supported response formats:</strong></p>
  * <ul>
- *   <li><code>json</code> - JSON format with transcription text</li>
- *   <li><code>text</code> - Plain text transcription</li>
+ *   <li><code>json</code> - JSON format with translated text</li>
+ *   <li><code>text</code> - Plain text translation</li>
  *   <li><code>verbose_json</code> - Detailed JSON with timing information</li>
  * </ul>
  * 
  * @author Debajit Kumar Phukan
- * @since 07-Sep-2025
- * @version 2.1.0
- * @see Transcription
+ * @since 26-Oct-2025
+ * @version 1.1.0
+ * @see Translation
  */
-public class TranscriptionRequest {
+public class TranslationRequest {
     private String model;
     private String file;
     private String url;
     private String prompt;
+    private String language;
     
     @JsonProperty("response_format") 
     private String responseFormat = "json";
     
     private Double temperature = 0.0;
-    private String language;
     
     @JsonProperty("timestamp_granularities")
     private String[] timestampGranularities;
@@ -42,56 +41,56 @@ public class TranscriptionRequest {
     /**
      * Default constructor.
      */
-    public TranscriptionRequest() {}
+    public TranslationRequest() {}
     
     /**
-     * Constructs a new TranscriptionRequest with the specified model and file data.
+     * Constructs a new TranslationRequest with the specified model and file data.
      * 
-     * @param model the model to use for transcription
+     * @param model the model to use for translation
      * @param file the audio file data (base64 encoded or file path)
      */
-    public TranscriptionRequest(String model, String file) {
+    public TranslationRequest(String model, String file) {
         this.model = model;
         this.file = file;
     }
     
     /**
-     * Constructs a new TranscriptionRequest with URL instead of file.
+     * Constructs a new TranslationRequest with URL instead of file.
      * 
-     * @param model the model to use for transcription
-     * @param url the audio URL for transcription
+     * @param model the model to use for translation
+     * @param url the audio URL for translation
      */
-    public TranscriptionRequest(String model, String url, boolean useUrl) {
+    public TranslationRequest(String model, String url, boolean useUrl) {
         this.model = model;
         this.url = url;
     }
     
     /**
-     * Constructs a new TranscriptionRequest with all parameters.
+     * Constructs a new TranslationRequest with all parameters.
      * 
-     * @param model the model to use for transcription
+     * @param model the model to use for translation
      * @param file the audio file data
      * @param url the audio URL
-     * @param prompt the optional prompt to guide transcription
+     * @param prompt the optional prompt to guide translation
+     * @param language the audio language
      * @param responseFormat the response format
      * @param temperature the sampling temperature
-     * @param language the audio language
      * @param timestampGranularities the timestamp granularities
      */
-    public TranscriptionRequest(String model, String file, String url, String prompt, String responseFormat,
-                              Double temperature, String language, String[] timestampGranularities) {
+    public TranslationRequest(String model, String file, String url, String prompt, String language, 
+                            String responseFormat, Double temperature, String[] timestampGranularities) {
         this.model = model;
         this.file = file;
         this.url = url;
         this.prompt = prompt;
+        this.language = language;
         this.responseFormat = responseFormat;
         this.temperature = temperature;
-        this.language = language;
         this.timestampGranularities = timestampGranularities;
     }
     
     /**
-     * Gets the model to use for transcription.
+     * Gets the model to use for translation.
      * 
      * @return the model identifier (e.g., "whisper-large-v3")
      */
@@ -100,7 +99,7 @@ public class TranscriptionRequest {
     }
     
     /**
-     * Sets the model to use for transcription.
+     * Sets the model to use for translation.
      * 
      * @param model the model identifier
      */
@@ -127,7 +126,7 @@ public class TranscriptionRequest {
     }
     
     /**
-     * Gets the audio URL for transcription.
+     * Gets the audio URL for translation.
      * 
      * @return the audio URL
      */
@@ -136,7 +135,7 @@ public class TranscriptionRequest {
     }
     
     /**
-     * Sets the audio URL for transcription.
+     * Sets the audio URL for translation.
      * 
      * @param url the audio URL
      */
@@ -145,7 +144,7 @@ public class TranscriptionRequest {
     }
     
     /**
-     * Gets the optional prompt to guide the transcription.
+     * Gets the optional prompt to guide the translation.
      * 
      * @return the prompt text, or null if not set
      */
@@ -154,7 +153,7 @@ public class TranscriptionRequest {
     }
     
     /**
-     * Sets the optional prompt to guide the transcription.
+     * Sets the optional prompt to guide the translation.
      * 
      * @param prompt the prompt text
      */
@@ -163,7 +162,25 @@ public class TranscriptionRequest {
     }
     
     /**
-     * Gets the response format for the transcription.
+     * Gets the language of the audio for translation.
+     * 
+     * @return the language code (e.g., "en", "es", "fr"), or null if not set
+     */
+    public String getLanguage() {
+        return language;
+    }
+    
+    /**
+     * Sets the language of the audio for translation.
+     * 
+     * @param language the language code (e.g., "en", "es", "fr")
+     */
+    public void setLanguage(String language) {
+        this.language = language;
+    }
+    
+    /**
+     * Gets the response format for the translation.
      * 
      * @return the response format (e.g., "json", "text", "verbose_json")
      */
@@ -172,7 +189,7 @@ public class TranscriptionRequest {
     }
     
     /**
-     * Sets the response format for the transcription.
+     * Sets the response format for the translation.
      * 
      * @param responseFormat the response format
      */
@@ -181,7 +198,7 @@ public class TranscriptionRequest {
     }
     
     /**
-     * Gets the sampling temperature for transcription.
+     * Gets the sampling temperature for translation.
      * 
      * @return the temperature value (0.0 to 1.0), or null if not set
      */
@@ -190,7 +207,7 @@ public class TranscriptionRequest {
     }
     
     /**
-     * Sets the sampling temperature for transcription.
+     * Sets the sampling temperature for translation.
      * 
      * @param temperature the temperature value (0.0 to 1.0)
      */
@@ -199,44 +216,26 @@ public class TranscriptionRequest {
     }
     
     /**
-     * Gets the language of the audio for transcription.
-     * 
-     * @return the language code (e.g., "en", "es", "fr"), or null if not set
-     */
-    public String getLanguage() { 
-        return language; 
-    }
-    
-    /**
-     * Sets the language of the audio for transcription.
-     * 
-     * @param language the language code (e.g., "en", "es", "fr")
-     */
-    public void setLanguage(String language) { 
-        this.language = language; 
-    }
-    
-    /**
-     * Gets the timestamp granularities for detailed transcription.
+     * Gets the timestamp granularities for detailed translation.
      * 
      * @return the timestamp granularities array, or null if not set
      */
-    public String[] getTimestampGranularities() { 
-        return timestampGranularities; 
+    public String[] getTimestampGranularities() {
+        return timestampGranularities;
     }
     
     /**
-     * Sets the timestamp granularities for detailed transcription.
+     * Sets the timestamp granularities for detailed translation.
      * Optional (must set "response_format" to "verbose_json" to use and can specify "word", "segment" (default), or both).
      * 
      * @param timestampGranularities the timestamp granularities array
      */
-    public void setTimestampGranularities(String[] timestampGranularities) { 
-        this.timestampGranularities = timestampGranularities; 
+    public void setTimestampGranularities(String[] timestampGranularities) {
+        this.timestampGranularities = timestampGranularities;
     }
     
     /**
-     * Validates the transcription request parameters.
+     * Validates the translation request parameters.
      * 
      * @throws IllegalArgumentException if required parameters are missing or invalid
      */
@@ -256,18 +255,18 @@ public class TranscriptionRequest {
     }
     
     /**
-     * Returns a string representation of the transcription request.
+     * Returns a string representation of the translation request.
      * 
      * @return a string containing model and response format
      */
     @Override
     public String toString() {
-        return "TranscriptionRequest{" +
+        return "TranslationRequest{" +
                 "model='" + model + '\'' +
                 ", file=" + (file != null ? "provided" : "null") +
                 ", url=" + (url != null ? "provided" : "null") +
-                ", responseFormat='" + responseFormat + '\'' +
                 ", language='" + language + '\'' +
+                ", responseFormat='" + responseFormat + '\'' +
                 ", temperature=" + temperature +
                 '}';
     }

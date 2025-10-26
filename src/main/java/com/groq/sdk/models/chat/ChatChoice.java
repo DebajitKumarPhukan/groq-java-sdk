@@ -15,6 +15,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class ChatChoice {
     private Integer index;
     private ChatMessage message;
+    private String reasoning;
     
     @JsonProperty("finish_reason")
     private String finishReason;
@@ -73,5 +74,23 @@ public class ChatChoice {
      */
     public void setMessage(ChatMessage message) { 
         this.message = message; 
+    }
+    
+    /**
+     * Gets the reasoning content for this choice (for reasoning models).
+     * 
+     * @return the reasoning content, or null if not set
+     */
+    public String getReasoning() { 
+        return reasoning; 
+    }
+    
+    /**
+     * Sets the reasoning content for this choice (for reasoning models).
+     * 
+     * @param reasoning the reasoning content
+     */
+    public void setReasoning(String reasoning) { 
+        this.reasoning = reasoning; 
     }
 }

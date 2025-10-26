@@ -166,21 +166,121 @@ if (response.isSuccessful()) {
     System.out.println("Generated " + response.getData().getData().size() + " embeddings");
 }
 ```
-#### Audio Processing
+#### Audio Processing - Text-to-Speech
 ```java
 import com.groq.sdk.models.audio.SpeechRequest;
-import com.groq.sdk.models.audio.TranscriptionRequest;
+import com.groq.sdk.models.audio.SpeechResponse;
 
-// Text-to-Speech
-SpeechRequest speechRequest = new SpeechRequest("tts-1", "Hello world!", "alloy");
-var speechResponse = client.audio().createSpeech(speechRequest);
+// Text-to-Speech with PlayAI voices
+SpeechRequest speechRequest = new SpeechRequest();
+speechRequest.setModel("playai-tts");
+speechRequest.setInput("Hello! This is a demonstration of Groq's text to speech capabilities.");
+speechRequest.setVoice("Fritz-PlayAI");
+speechRequest.setResponseFormat("mp3");
+speechRequest.setSpeed(1.2); // Faster than normal
+
+GroqResponse<SpeechResponse> response = client.audio().createSpeech(speechRequest);
+
+if (response.isSuccessful()) {
+    SpeechResponse speechResponse = response.getData();
+    byte[] audioData = speechResponse.getAudio();
+    
+    // Save audio to file
+    String filename = "greeting_" + System.currentTimeMillis() + ".mp3";
+    Path filePath = Paths.get("output", filename);
+    Files.write(filePath, audioData);
+    System.out.println("Audio saved to: " + filePath.toAbsolutePath());
+}
+```
+#### Audio Processing - Speech-to-Text Transcription
+```java
+import com.groq.sdk.models.audio.TranscriptionRequest;
+import com.groq.sdk.models.audio.Transcription;
 
 // Audio Transcription
 TranscriptionRequest transcriptionRequest = new TranscriptionRequest();
-transcriptionRequest.setModel("whisper-large-v3");
-transcriptionRequest.setFile("base64_audio_data");
-var transcription = client.audio().createTranscription(transcriptionRequest);
+transcriptionRequest.setModel("whisper-large-v3-turbo");
+transcriptionRequest.setFile("path/to/audio/file.mp3");
+transcriptionRequest.setLanguage("en");
+transcriptionRequest.setResponseFormat("verbose_json");
+transcriptionRequest.setTemperature(0.0);
+
+GroqResponse<Transcription> response = client.audio().createTranscription(transcriptionRequest);
+
+if (response.isSuccessful()) {
+    Transcription transcription = response.getData();
+    System.out.println("Transcribed text: " + transcription.getText());
+    System.out.println("Audio duration: " + transcription.getDuration() + " seconds");
+    
+    if (transcription.getSegments() != null) {
+        System.out.println("Segments: " + transcription.getSegments().size());
+    }
+}
 ```
+#### Audio Processing - Translation
+```java
+import com.groq.sdk.models.audio.TranslationRequest;
+import com.groq.sdk.models.audio.Translation;
+
+// Audio Translation (convert audio to English text)
+TranslationRequest translationRequest = new TranslationRequest();
+translationRequest.setModel("whisper-large-v3");
+translationRequest.setFile("path/to/spanish/audio.mp3");
+translationRequest.setLanguage("es");
+translationRequest.setPrompt("Translate this audio content from Spanish to English");
+translationRequest.setResponseFormat("verbose_json");
+
+GroqResponse<Translation> response = client.audio().createTranslation(translationRequest);
+
+if (response.isSuccessful()) {
+    Translation translation = response.getData();
+    System.out.println("Translated text: " + translation.getText());
+    System.out.println("Detected language: " + translation.getLanguage());
+}
+```
+#### Vision Analysis
+```java
+import com.groq.sdk.models.vision.VisionRequest;
+import com.groq.sdk.models.vision.VisionMessage;
+import com.groq.sdk.models.vision.VisionContentPart;
+
+// Vision analysis with remote image URL
+String imageUrl = "https://example.com/image.jpg";
+String prompt = "What's in this image? Describe it in detail.";
+
+VisionRequest request = client.vision().createVisionRequestWithUrl(
+    "llava-v1.5-7b-4096-preview", 
+    imageUrl, 
+    prompt
+);
+request.setMaxTokens(500);
+request.setTemperature(0.1);
+
+GroqResponse<ChatCompletion> response = client.vision().createCompletion(request);
+
+if (response.isSuccessful()) {
+    String analysis = response.getData().getChoices().get(0).getMessage().getContent();
+    System.out.println("Image analysis: " + analysis);
+}
+
+// Vision analysis with local image
+Path localImagePath = Paths.get("src/main/resources/images/local_image.jpg");
+VisionRequest localRequest = client.vision().createVisionRequestWithLocalImage(
+    "llava-v1.5-7b-4096-preview",
+    localImagePath.toString(),
+    "What text is visible in this image?"
+);
+
+// Vision analysis with image bytes
+byte[] imageBytes = Files.readAllBytes(localImagePath);
+VisionRequest bytesRequest = client.vision().createVisionRequestWithImageBytes(
+    "llava-v1.5-7b-4096-preview",
+    imageBytes,
+    "image/jpeg",
+    "Analyze this image and describe what you see"
+);
+```
+
 ### Project Structure
 ```java
 groq-java-sdk/
@@ -208,7 +308,18 @@ groq-java-sdk/
 │   │   │   ├── SpeechRequest.java
 │   │   │   ├── SpeechResponse.java
 │   │   │   ├── TranscriptionRequest.java
-│   │   │   └── Transcription.java
+│   │   │   ├── Transcription.java
+│   │   │   ├── TranslationRequest.java
+│   │   │   ├── Translation.java
+│   │   │   ├── Segment.java
+│   │   │   └── GroqMetadata.java
+│   │   ├── vision/                  # Vision processing models
+│   │   │   ├── VisionRequest.java
+│   │   │   ├── VisionResponse.java
+│   │   │   ├── VisionMessage.java
+│   │   │   ├── VisionChoice.java
+│   │   │   ├── VisionContentPart.java
+│   │   │   └── VisionImageUrl.java
 │   │   ├── batches/                 # Batch processing models
 │   │   │   ├── Batch.java
 │   │   │   ├── BatchList.java
@@ -228,6 +339,7 @@ groq-java-sdk/
 │   │   ├── ChatResource.java        # Chat completion operations
 │   │   ├── EmbeddingsResource.java  # Embedding operations
 │   │   ├── AudioResource.java       # Audio operations
+│   │   ├── VisionResource.java      # Vision operations
 │   │   ├── BatchesResource.java     # Batch operations
 │   │   ├── FilesResource.java       # File operations
 │   │   └── ModelsResource.java      # Model operations
@@ -247,11 +359,37 @@ groq-java-sdk/
 
 * `client.audio()` - Speech synthesis and transcription
 
+* `client.vision()` - Image analysis and multimodal understanding
+
 * `client.batches()` - Batch processing operations
 
 * `client.files()` - File upload and management
 
 * `client.models()` - Model information and listing
+
+#### Audio Features
+* Text-to-Speech (TTS): Convert text to natural-sounding speech using PlayAI voices
+
+* Speech-to-Text: Transcribe audio to text with Whisper models
+
+* Audio Translation: Convert audio in any language to English text
+
+* Multiple Formats: Support for MP3, WAV, FLAC, and other audio formats
+
+* Voice Selection: 25+ high-quality PlayAI voices with different accents and styles
+
+* Speed Control: Adjust speech speed from 0.25x to 4.0x normal speed
+
+#### Vision Features
+* Multimodal Analysis: Combine text and images in single requests
+
+* Multiple Input Types: Support for remote URLs, local files, and image bytes
+
+* Detailed Descriptions: Get comprehensive analysis of image content
+
+* Text Extraction: Read and interpret text within images
+
+* Object Recognition: Identify objects, scenes, and activities in images
 
 #### Tool Calling Features
 * Automatic Tool Selection: Model chooses which tools to use based on context
@@ -289,8 +427,33 @@ try {
     System.err.println("Unexpected error: " + e.getMessage());
 }
 ```
+### Supported Audio Models
+#### Text-to-Speech Models
+* `playai-tts` - High-quality PlayAI TTS model
 
-#### Contributing
+#### Speech-to-Text Models
+* `whisper-large-v3-turbo` - Latest Whisper model for transcription
+
+* `whisper-large-v3` - Latest Whisper model for translation
+
+#### Supported Voices
+* `Aaliyah-PlayAI, Adelaide-PlayAI, Angelo-PlayAI, Arista-PlayAI, Atlas-PlayAI`
+
+* `Basil-PlayAI, Briggs-PlayAI, Calum-PlayAI, Celeste-PlayAI, Cheyenne-PlayAI`
+
+* `Chip-PlayAI, Cillian-PlayAI, Deedee-PlayAI, Eleanor-PlayAI, Fritz-PlayAI`
+
+* `Gail-PlayAI, Indigo-PlayAI, Jennifer-PlayAI, Juan-PlayAI, Judy-PlayAI`
+
+* `Mamaw-PlayAI, Mason-PlayAI, Mikail-PlayAI, Mitch-PlayAI, Nia-PlayAI`
+
+* `Quinn-PlayAI, Ruby-PlayAI, Thunder-PlayAI`
+
+#### Supported Vision Models
+* `meta-llama/llama-4-maverick-17b-128e-instruct` - High-performance vision model</li>
+* `meta-llama/llama-4-scout-17b-16e-instruct` - Efficient vision model</li>
+
+### Contributing
 We welcome contributions from the community! Here's how you can help:
 
 1. Fork the repository

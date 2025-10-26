@@ -66,6 +66,12 @@ public class ChatCompletionRequest {
     @JsonProperty("parallel_tool_calls")
     private Boolean parallelToolCalls;
     
+    @JsonProperty("include_reasoning")
+    private Boolean includeReasoning;
+    
+    @JsonProperty("reasoning_format")
+    private String reasoningFormat;
+    
     /**
      * Default constructor.
      */
@@ -348,5 +354,41 @@ public class ChatCompletionRequest {
      */
     public void setParallelToolCalls(Boolean parallelToolCalls) { 
         this.parallelToolCalls = parallelToolCalls; 
+    }
+    
+    /**
+     * Gets whether to include reasoning in the response.
+     * 
+     * @return true if reasoning is enabled, false otherwise, or null if not set
+     */
+    public Boolean getIncludeReasoning() { 
+        return includeReasoning; 
+    }
+    
+    /**
+     * Sets whether to include reasoning in the response.
+     * 
+     * @param includeReasoning true to include reasoning, false to exclude
+     */
+    public void setIncludeReasoning(Boolean includeReasoning) { 
+        this.includeReasoning = includeReasoning; 
+    }
+    
+    /**
+     * Gets the reasoning format for the response.
+     * 
+     * @return the reasoning format (e.g., "hidden", "raw", "parsed"), or null if not set
+     */
+    public String getReasoningFormat() { 
+        return reasoningFormat; 
+    }
+    
+    /**
+     * Sets the reasoning format for the response.
+     * 
+     * @param reasoningFormat the reasoning format (e.g., "hidden", "raw", "parsed")
+     */
+    public void setReasoningFormat(String reasoningFormat) { 
+        this.reasoningFormat = reasoningFormat; 
     }
 }

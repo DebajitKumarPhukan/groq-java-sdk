@@ -26,6 +26,7 @@ public class ChatMessage {
     private String role;
     private String content;
     private String name;
+    private String reasoning;
     
     @JsonProperty("tool_calls")
     private List<ChatToolCall> toolCalls;
@@ -95,6 +96,24 @@ public class ChatMessage {
      */
     public void setContent(String content) { 
         this.content = content; 
+    }
+    
+    /**
+     * Gets the reasoning content of the message (for reasoning models).
+     * 
+     * @return the reasoning content, or null if not set
+     */
+    public String getReasoning() { 
+        return reasoning; 
+    }
+    
+    /**
+     * Sets the reasoning content of the message (for reasoning models).
+     * 
+     * @param reasoning the reasoning content
+     */
+    public void setReasoning(String reasoning) { 
+        this.reasoning = reasoning; 
     }
     
     /**

@@ -1,0 +1,28 @@
+name: Build Feature Branch
+
+on:
+  push:
+    branches:
+      - 'feature/**'
+
+jobs:
+  build:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Build and test SNAPSHOT
+        run: mvn clean package
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: snapshot-jar
+          path: target/*.jar

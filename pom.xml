@@ -6,7 +6,7 @@
 
 	<groupId>io.github.debajitkumarphukan</groupId>
 	<artifactId>groq-java-sdk</artifactId>
-	<version>1.0.2</version>
+	<version>1.0.3</version>
 	<packaging>jar</packaging>
 
 	<name>Groq Java SDK</name>
@@ -146,6 +146,9 @@
 				<configuration>
 					<excludes>
 						<exclude>**/examples/**</exclude>
+						<exclude>images/**</exclude>
+						<exclude>audio/**</exclude>
+						<exclude>output/**</exclude>
 					</excludes>
 				</configuration>
 			</plugin>
@@ -157,6 +160,10 @@
 				<version>${maven.surefire.version}</version>
 				<configuration>
 					<useSystemClassLoader>false</useSystemClassLoader>
+					<systemPropertyVariables>
+						<jacoco.excludes>com/groq/sdk/models/**/*</jacoco.excludes>
+						<jacoco.excludes>com/groq/sdk/examples/**/*</jacoco.excludes>
+					</systemPropertyVariables>
 					<includes>
 						<include>**/*Test.java</include>
 						<include>**/*Tests.java</include>
@@ -168,6 +175,12 @@
 				<groupId>org.jacoco</groupId>
 				<artifactId>jacoco-maven-plugin</artifactId>
 				<version>0.8.10</version>
+				<configuration>
+					<excludes>
+						<exclude>com/groq/sdk/models/**/*</exclude>
+						<exclude>com/groq/sdk/examples/**/*</exclude>
+					</excludes>
+				</configuration>
 				<executions>
 					<execution>
 						<goals>

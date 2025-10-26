@@ -1,8 +1,10 @@
 package com.groq.sdk.client;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.groq.sdk.core.BaseClient;
 import com.groq.sdk.models.GroqResponse;
 import com.groq.sdk.resources.AudioResource;
@@ -11,14 +13,17 @@ import com.groq.sdk.resources.ChatResource;
 import com.groq.sdk.resources.EmbeddingsResource;
 import com.groq.sdk.resources.FilesResource;
 import com.groq.sdk.resources.ModelsResource;
+import com.groq.sdk.resources.VisionResource;
 
 import okhttp3.MultipartBody;
+import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.Response;
 
 /**
  * Main client for interacting with the Groq API.
- * Provides access to all API resources including chat, embeddings, audio, batches, files, and models.
- * Handles authentication, request building, and response processing with comprehensive error handling.
+ * Provides access to all API resources including chat, embeddings, audio, batches, 
+ * files, models, and vision with comprehensive error handling.
  * 
  * <p><strong>Example usage:</strong></p>
  * <pre>{@code
@@ -28,11 +33,12 @@ import okhttp3.Request;
  *     .build();
  * 
  * GroqResponse<ModelList> response = client.models().list();
+ * GroqResponse<VisionResponse> visionResponse = client.vision().analyzeImage(imageUrl, "Describe this image");
  * }</pre>
  * 
  * @author Debajit Kumar Phukan
  * @since 23-Aug-2025
- * @version 1.0.0
+ * @version 2.0.0
  * @see BaseClient
  * @see ChatResource
  * @see ModelsResource
@@ -40,6 +46,7 @@ import okhttp3.Request;
  * @see AudioResource
  * @see BatchesResource
  * @see FilesResource
+ * @see VisionResource
  */
 public class GroqClient extends BaseClient {
     private final ChatResource chat;
@@ -48,7 +55,13 @@ public class GroqClient extends BaseClient {
     private final AudioResource audio;
     private final BatchesResource batches;
     private final FilesResource files;
+    private final VisionResource vision;
     
+    /**
+     * Constructs a new GroqClient with the specified builder configuration.
+     * 
+     * @param builder the builder containing client configuration
+     */
     private GroqClient(Builder builder) {
         super(builder);
         this.chat = new ChatResource(this);
@@ -57,6 +70,7 @@ public class GroqClient extends BaseClient {
         this.audio = new AudioResource(this);
         this.batches = new BatchesResource(this);
         this.files = new FilesResource(this);
+        this.vision = new VisionResource(this);
     }
     
     /**
@@ -117,6 +131,16 @@ public class GroqClient extends BaseClient {
      */
     public FilesResource files() {
         return files;
+    }
+    
+    /**
+     * Gets the vision resource for image understanding and multimodal processing.
+     * 
+     * @return the vision resource instance
+     * @see VisionResource
+     */
+    public VisionResource vision() {
+        return vision;
     }
     
     /**
@@ -239,6 +263,19 @@ public class GroqClient extends BaseClient {
         }
     }
     
+    /**
+     * Internal method to execute HTTP methods with consistent error handling.
+     *
+     * @param <T> the type of response data
+     * @param method the HTTP method
+     * @param path the API endpoint path
+     * @param body the request body
+     * @param responseType the class type of the response
+     * @param queryParams optional query parameters
+     * @param headers optional HTTP headers
+     * @return the API response wrapped in GroqResponse
+     * @throws RuntimeException if the request fails
+     */
     private <T> GroqResponse<T> executeHttpMethod(String method, String path, Object body, 
                                                 Class<T> responseType,
                                                 Map<String, Object> queryParams,
@@ -308,7 +345,7 @@ public class GroqClient extends BaseClient {
             }
             
             this.defaultHeaders.put("Content-Type", "application/json");
-            this.defaultHeaders.put("User-Agent", "Groq-Java-SDK/1.0.0");
+            this.defaultHeaders.put("User-Agent", "Groq-Java-SDK/2.0.0");
         }
     }
     
@@ -319,5 +356,81 @@ public class GroqClient extends BaseClient {
      */
     public static Builder builder() {
         return new Builder();
+    }
+    
+    /**
+     * Returns a string representation of the GroqClient configuration.
+     * 
+     * @return a string containing base URL and resource availability
+     */
+    @Override
+    public String toString() {
+        return "GroqClient{" +
+                "baseUrl='" + baseUrl + '\'' +
+                ", resources=[chat, models, embeddings, audio, batches, files, vision]" +
+                '}';
+    }
+    
+    // ========== NEW METHODS ADDED FOR BINARY RESPONSE HANDLING ==========
+    
+    /**
+     * Gets the underlying HTTP client for direct request handling.
+     * 
+     * @return the OkHttpClient instance
+     */
+    public OkHttpClient getHttpClient() {
+        return httpClient;
+    }
+    
+    /**
+     * Gets the API key for authentication.
+     * 
+     * @return the API key
+     */
+    public String getApiKey() {
+        return apiKey;
+    }
+    
+    /**
+     * Gets the base URL for API requests.
+     * 
+     * @return the base URL
+     */
+    public String getBaseUrl() {
+        return baseUrl;
+    }
+    
+    /**
+     * Gets the default headers for API requests.
+     * 
+     * @return the default headers map
+     */
+    public Map<String, String> getDefaultHeaders() {
+        return defaultHeaders;
+    }
+    
+    /**
+     * Gets the ObjectMapper for JSON serialization/deserialization.
+     * 
+     * @return the ObjectMapper instance
+     */
+    public ObjectMapper getObjectMapper() {
+        return objectMapper;
+    }
+    
+    /**
+     * Executes a direct HTTP request and returns the raw response for binary data handling.
+     * This is specifically for endpoints that return binary data (like TTS audio).
+     *
+     * @param request the HTTP request to execute
+     * @return the raw Response object for binary processing
+     * @throws RuntimeException if the request execution fails
+     */
+    public Response executeRawRequest(Request request) {
+        try {
+            return httpClient.newCall(request).execute();
+        } catch (IOException e) {
+            throw new RuntimeException("HTTP request execution failed: " + e.getMessage(), e);
+        }
     }
 }

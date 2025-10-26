@@ -132,7 +132,7 @@ class ChatResourceTest {
 				}
 				""";
 
-		mockWebServer.enqueue(new MockResponse().setBody(responseBody).setResponseCode(200));
+		mockWebServer.enqueue(new MockResponse().setBody(responseBody).setResponseCode(200).setHeader("Content-Type", "application/json"));
 
 		GroqResponse<ChatCompletion> response = chatResource.createCompletion("openai/gpt-oss-20b", "Hello");
 

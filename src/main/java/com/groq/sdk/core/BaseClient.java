@@ -213,20 +213,20 @@ public abstract class BaseClient {
         }
         
         try {
-            String responseBody = body.string();
-            T data = null;
-            
-            if (responseType != null && !responseBody.isEmpty()) {
-                if (responseType == String.class) {
-                    data = responseType.cast(responseBody);
-                } else {
-                    data = objectMapper.readValue(responseBody, responseType);
-                }
+            String responseContent = body.string();
+            String contentType = response.header("Content-Type", "").toLowerCase();
+            if (contentType.contains("application/json")) {
+                T data = objectMapper.readValue(responseContent, responseType);
+                return new GroqResponse<>(data, response.headers().toMultimap(), response.code());
+            } else if (contentType.contains("text/plain")) {
+                @SuppressWarnings("unchecked")
+                T data = (T) responseContent;
+                return new GroqResponse<>(data, response.headers().toMultimap(), response.code());
+            } else {
+            	throw new IOException("Response in unsupported type '"+contentType+"'");
             }
-            
-            return new GroqResponse<>(data, response.headers().toMultimap(), response.code());
         } catch (IOException e) {
-            throw new IOException("Failed to parse response body: " + e.getMessage(), e);
+            throw new IOException("Failed to process response body: " + e.getMessage(), e);
         }
     }
     

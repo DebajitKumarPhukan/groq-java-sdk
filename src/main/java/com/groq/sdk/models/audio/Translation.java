@@ -5,15 +5,15 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Represents the result of an audio transcription.
+ * Represents the result of an audio translation.
  * Handles all three response formats: verbose_json, json, and text.
  * 
  * @author Debajit Kumar Phukan
- * @since 07-Sep-2025
+ * @since 26-Oct-2025
  * @version 2.0.0
- * @see TranscriptionRequest
+ * @see TranslationRequest
  */
-public class Transcription {
+public class Translation {
     private String task;
     private String language;
     private Double duration;
@@ -26,19 +26,19 @@ public class Transcription {
     /**
      * Default constructor.
      */
-    public Transcription() {}
+    public Translation() {}
     
     /**
-     * Constructs a new Transcription with the specified text (for text format).
+     * Constructs a new Translation with the specified text (for text format).
      * 
-     * @param text the transcribed text
+     * @param text the translated text
      */
-    public Transcription(String text) { 
+    public Translation(String text) { 
         this.text = text; 
     }
     
     /**
-     * Gets the task type (transcribe).
+     * Gets the task type (translate).
      * 
      * @return the task type
      */
@@ -47,7 +47,7 @@ public class Transcription {
     }
     
     /**
-     * Sets the task type (transcribe).
+     * Sets the task type (translate).
      * 
      * @param task the task type
      */
@@ -92,18 +92,18 @@ public class Transcription {
     }
     
     /**
-     * Gets the transcribed text (common to all formats).
+     * Gets the translated text (common to all formats).
      * 
-     * @return the transcribed text
+     * @return the translated text
      */
     public String getText() { 
         return text; 
     }
     
     /**
-     * Sets the transcribed text (common to all formats).
+     * Sets the translated text (common to all formats).
      * 
-     * @param text the transcribed text
+     * @param text the translated text
      */
     public void setText(String text) { 
         this.text = text; 
@@ -146,13 +146,13 @@ public class Transcription {
     }
     
     /**
-     * Returns a string representation of the transcription.
+     * Returns a string representation of the translation.
      * 
      * @return a string containing the text and basic information
      */
     @Override
     public String toString() {
-        return "Transcription{" +
+        return "Translation{" +
                 "task='" + task + '\'' +
                 ", language='" + language + '\'' +
                 ", duration=" + duration +

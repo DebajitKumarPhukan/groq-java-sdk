@@ -452,7 +452,7 @@ try {
 * `meta-llama/llama-4-maverick-17b-128e-instruct` - High-performance vision model</li>
 * `meta-llama/llama-4-scout-17b-16e-instruct` - Efficient vision model</li>
 
-#### Contributing
+### Contributing
 We welcome contributions from the community! Here's how you can help:
 
 1. Fork the repository

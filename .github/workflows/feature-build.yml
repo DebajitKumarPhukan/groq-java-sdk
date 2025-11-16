@@ -21,6 +21,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
+        with:
+          token: ${{ secrets.GITHUB_ACTION_TOKEN }}
 
       - name: Set up Java
         uses: actions/setup-java@v4
@@ -33,7 +35,7 @@ jobs:
         run: mvn test
       - name: Extract code coverage results
         uses: cicirello/jacoco-badge-generator@v2
-      - name: Update the code coverage results
+      - name: Update code coverage results
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"

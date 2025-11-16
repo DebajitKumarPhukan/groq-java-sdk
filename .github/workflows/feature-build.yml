@@ -22,7 +22,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v5
         with:
-          token: ${{ secrets.GITHUB_ACTION_TOKEN }}
+          token: ${{ secrets.GH_ACTION_SECRET }}
 
       - name: Set up Java
         uses: actions/setup-java@v4

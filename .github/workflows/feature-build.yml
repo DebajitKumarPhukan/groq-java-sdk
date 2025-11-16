@@ -4,6 +4,16 @@ on:
   push:
     branches:
       - 'feature/**'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+        - test
+        - staging
 
 jobs:
   build:
@@ -11,17 +21,27 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
+        with:
+          token: ${{ secrets.GH_ACTION_SECRET }}
 
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
-
       - name: Build SNAPSHOT
         run: mvn clean package
       - name: Run Maven tests and generate reports
         run: mvn test
+      - name: Extract code coverage results
+        uses: cicirello/jacoco-badge-generator@v2
+      - name: Update code coverage results
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add .github/badges/jacoco.svg
+          git commit -m "Update code coverage" || echo "No changes to commit"
+          git push
 
       - name: Local Upload build artifacts
         uses: actions/upload-artifact@v4

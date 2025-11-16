@@ -40,7 +40,20 @@ import com.groq.sdk.models.embeddings.EmbeddingRequest;
 import com.groq.sdk.models.embeddings.EmbeddingResponse;
 import com.groq.sdk.models.files.FileList;
 import com.groq.sdk.models.files.FileUploadRequest;
+import com.groq.sdk.models.mcp.MCPCallOutput;
+import com.groq.sdk.models.mcp.MCPListToolsOutput;
+import com.groq.sdk.models.mcp.MCPTool;
+import com.groq.sdk.models.mcp.MCPToolDefinition;
 import com.groq.sdk.models.models.ModelList;
+import com.groq.sdk.models.responses.MessageContent;
+import com.groq.sdk.models.responses.MessageInput;
+import com.groq.sdk.models.responses.MessageOutput;
+import com.groq.sdk.models.responses.ReasoningConfig;
+import com.groq.sdk.models.responses.ReasoningContent;
+import com.groq.sdk.models.responses.ReasoningOutput;
+import com.groq.sdk.models.responses.Response;
+import com.groq.sdk.models.responses.ResponseOutput;
+import com.groq.sdk.models.responses.ResponseRequest;
 import com.groq.sdk.models.vision.VisionRequest;
 
 /**
@@ -86,14 +99,18 @@ public class Example {
             demonstrateChatCompletions(client);
             demonstrateReasoning(client);
             demonstrateReasoningWithTools(client);
-//            demonstrateVisionOperations(client);
-//            demonstrateToolCalls(client);
-//            demonstrateEmbeddings(client);
-//            demonstrateModelListing(client);
-//            demonstrateAudioOperations(client);
-//            demonstrateBatchOperations(client);
-//            demonstrateFileOperations(client);
-//            demonstrateErrorHandling(client);
+            demonstrateVisionOperations(client);
+            demonstrateToolCalls(client);
+            demonstrateEmbeddings(client);
+            demonstrateModelListing(client);
+            demonstrateAudioOperations(client);
+            demonstrateBatchOperations(client);
+            demonstrateFileOperations(client);
+            demonstrateErrorHandling(client);
+            demonstrateResponseAPI(client);
+            demonstrateMCPOperations(client);
+            demonstrateSimpleMCP(client);
+            demonstrateMCPErrorHandling(client);
             
             // Interactive demo
             runInteractiveDemo(client);            
@@ -111,10 +128,10 @@ public class Example {
             Path outputPath = Paths.get(AUDIO_OUTPUT_DIR);
             if (!Files.exists(outputPath)) {
                 Files.createDirectories(outputPath);
-                System.out.println("✓ Created audio output directory: " + outputPath.toAbsolutePath());
+                System.out.println("* Created audio output directory: " + outputPath.toAbsolutePath());
             }
         } catch (IOException e) {
-            System.err.println("✗ Failed to create audio output directory: " + e.getMessage());
+            System.err.println("x Failed to create audio output directory: " + e.getMessage());
         }
     }
     
@@ -139,11 +156,11 @@ public class Example {
                 fos.write(audioData);
             }
             
-            System.out.println("✓ Audio saved to: " + filePath.toAbsolutePath());
+            System.out.println("* Audio saved to: " + filePath.toAbsolutePath());
             return filePath.toAbsolutePath().toString();
             
         } catch (IOException e) {
-            System.err.println("✗ Failed to save audio file: " + e.getMessage());
+            System.err.println("x Failed to save audio file: " + e.getMessage());
             return null;
         }
     }
@@ -211,14 +228,14 @@ public class Example {
                 
                 if (response.isSuccessful()) {
                     String content = response.getData().getChoices().get(0).getMessage().getContent();
-                    System.out.println("✓ " + model + ": " + content);
+                    System.out.println("* " + model + ": " + content);
                     break; // Success, no need to try other models
                 } else {
-                    System.err.println("✗ " + model + " failed with status: " + response.getStatusCode());
+                    System.err.println("x " + model + " failed with status: " + response.getStatusCode());
                 }
                 
             } catch (Exception e) {
-                System.err.println("✗ " + model + " error: " + e.getMessage());
+                System.err.println("x " + model + " error: " + e.getMessage());
                 // Continue to next model
             }
         }
@@ -259,7 +276,7 @@ public class Example {
             demonstrateToolCallWithRealExecution(client, tools);
             
         } catch (Exception e) {
-            System.err.println("✗ Tool calls demo error: " + e.getMessage());
+            System.err.println("x Tool calls demo error: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -282,21 +299,21 @@ public class Example {
                 ChatMessage assistantMessage = completion.getChoices().get(0).getMessage();
                 
                 if (assistantMessage.getToolCalls() != null && !assistantMessage.getToolCalls().isEmpty()) {
-                    System.out.println("✓ Model decided to use tools:");
+                    System.out.println("* Model decided to use tools:");
                     for (ChatToolCall toolCall : assistantMessage.getToolCalls()) {
                         System.out.println("  - Tool: " + toolCall.getFunction().getName());
                         System.out.println("  - Arguments: " + toolCall.getFunction().getArguments());
                     }
                 } else {
-                    System.out.println("✓ Model chose to respond directly: " + 
+                    System.out.println("* Model chose to respond directly: " + 
                                      (assistantMessage.getContent() != null ? assistantMessage.getContent() : "[No content]"));
                 }
             } else {
-                System.err.println("✗ Auto tool selection failed with status: " + response.getStatusCode());
+                System.err.println("x Auto tool selection failed with status: " + response.getStatusCode());
             }
             
         } catch (Exception e) {
-            System.err.println("✗ Auto tool selection error: " + e.getMessage());
+            System.err.println("x Auto tool selection error: " + e.getMessage());
         }
     }
     
@@ -320,21 +337,21 @@ public class Example {
                 ChatMessage assistantMessage = response.getData().getChoices().get(0).getMessage();
                 
                 if (assistantMessage.getToolCalls() != null && !assistantMessage.getToolCalls().isEmpty()) {
-                    System.out.println("✓ Model used forced tool:");
+                    System.out.println("* Model used forced tool:");
                     for (ChatToolCall toolCall : assistantMessage.getToolCalls()) {
                         System.out.println("  - Tool: " + toolCall.getFunction().getName());
                         System.out.println("  - Arguments: " + toolCall.getFunction().getArguments());
                     }
                 } else {
-                    System.out.println("✓ Model responded directly: " + 
+                    System.out.println("* Model responded directly: " + 
                                      (assistantMessage.getContent() != null ? assistantMessage.getContent() : "[No content]"));
                 }
             } else {
-                System.err.println("✗ Forced tool usage failed with status: " + response.getStatusCode());
+                System.err.println("x Forced tool usage failed with status: " + response.getStatusCode());
             }
             
         } catch (Exception e) {
-            System.err.println("✗ Forced tool usage error: " + e.getMessage());
+            System.err.println("x Forced tool usage error: " + e.getMessage());
         }
     }
     
@@ -356,7 +373,7 @@ public class Example {
                 ChatMessage assistantMessage = firstResponse.getData().getChoices().get(0).getMessage();
                 
                 if (assistantMessage.getToolCalls() != null && !assistantMessage.getToolCalls().isEmpty()) {
-                    System.out.println("✓ Model requested tool call:");
+                    System.out.println("* Model requested tool call:");
                     
                     // Simulate tool execution and create tool response
                     for (ChatToolCall toolCall : assistantMessage.getToolCalls()) {
@@ -386,21 +403,21 @@ public class Example {
                         
                         if (secondResponse.isSuccessful()) {
                             String finalResponse = secondResponse.getData().getChoices().get(0).getMessage().getContent();
-                            System.out.println("✓ Final response: " + finalResponse);
+                            System.out.println("* Final response: " + finalResponse);
                         } else {
-                            System.err.println("✗ Second request failed with status: " + secondResponse.getStatusCode());
+                            System.err.println("x Second request failed with status: " + secondResponse.getStatusCode());
                         }
                     }
                 } else {
-                    System.out.println("✓ Model responded directly without tools: " + 
+                    System.out.println("* Model responded directly without tools: " + 
                                      (assistantMessage.getContent() != null ? assistantMessage.getContent() : "[No content]"));
                 }
             } else {
-                System.err.println("✗ First request failed with status: " + firstResponse.getStatusCode());
+                System.err.println("x First request failed with status: " + firstResponse.getStatusCode());
             }
             
         } catch (Exception e) {
-            System.err.println("✗ Tool call with real execution error: " + e.getMessage());
+            System.err.println("x Tool call with real execution error: " + e.getMessage());
         }
     }
     
@@ -812,19 +829,19 @@ public class Example {
             
             if (response.isSuccessful()) {
                 EmbeddingResponse embeddingResponse = response.getData();
-                System.out.println("✓ Generated " + embeddingResponse.getData().size() + " embeddings");
-                System.out.println("✓ Token usage: " + embeddingResponse.getUsage().getTotalTokens());
+                System.out.println("* Generated " + embeddingResponse.getData().size() + " embeddings");
+                System.out.println("* Token usage: " + embeddingResponse.getUsage().getTotalTokens());
                 
                 // Show sample of first embedding
                 List<Double> firstEmbedding = embeddingResponse.getData().get(0).getEmbedding();
-                System.out.println("✓ First embedding sample: " + 
+                System.out.println("* First embedding sample: " + 
                                  firstEmbedding.subList(0, Math.min(3, firstEmbedding.size())));
             } else {
-                System.err.println("✗ Embeddings failed with status: " + response.getStatusCode());
+                System.err.println("x Embeddings failed with status: " + response.getStatusCode());
             }
             
         } catch (Exception e) {
-            System.err.println("✗ Embeddings error: " + e.getMessage());
+            System.err.println("x Embeddings error: " + e.getMessage());
         }
     }
     
@@ -841,7 +858,7 @@ public class Example {
             
             if (response.isSuccessful()) {
                 ModelList modelList = response.getData();
-                System.out.println("✓ Available models (" + modelList.getData().size() + "):");
+                System.out.println("* Available models (" + modelList.getData().size() + "):");
                 
                 modelList.getData().stream()
                     .limit(5) // Show first 5 models
@@ -854,12 +871,12 @@ public class Example {
                     System.out.println("  ... and " + (modelList.getData().size() - 5) + " more");
                 }
             } else {
-                System.err.println("✗ Model listing failed with status: " + response.getStatusCode());
+                System.err.println("x Model listing failed with status: " + response.getStatusCode());
                 showFallbackModels();
             }
             
         } catch (Exception e) {
-            System.err.println("✗ Model listing error: " + e.getMessage());
+            System.err.println("x Model listing error: " + e.getMessage());
             showFallbackModels();
         }
     }
@@ -880,11 +897,11 @@ public class Example {
             GroqResponse<ChatCompletion> response = client.chat().createCompletion(request);
             
             if (!response.isSuccessful()) {
-                System.out.println("✓ Properly handled invalid model error: HTTP " + response.getStatusCode());
+                System.out.println("* Properly handled invalid model error: HTTP " + response.getStatusCode());
             }
             
         } catch (Exception e) {
-            System.out.println("✓ Properly caught exception for invalid model: " + e.getClass().getSimpleName());
+            System.out.println("* Properly caught exception for invalid model: " + e.getClass().getSimpleName());
         }
         
         // Test with empty API key scenario
@@ -894,10 +911,10 @@ public class Example {
                     .build();
                     
             GroqResponse<ModelList> response = invalidClient.models().list();
-            System.out.println("✗ Unexpected success with empty API key");
+            System.out.println("x Unexpected success with empty API key");
             
         } catch (Exception e) {
-            System.out.println("✓ Properly handled empty API key: " + e.getMessage());
+            System.out.println("* Properly handled empty API key: " + e.getMessage());
         }
         
         // Test with invalid tool configuration
@@ -912,10 +929,10 @@ public class Example {
             request.setTools(Arrays.asList(invalidTool));
             
             GroqResponse<ChatCompletion> response = client.chat().createCompletion(request);
-            System.out.println("✗ Unexpected success with invalid tool configuration");
+            System.out.println("x Unexpected success with invalid tool configuration");
             
         } catch (Exception e) {
-            System.out.println("✓ Properly handled invalid tool configuration: " + e.getClass().getSimpleName());
+            System.out.println("* Properly handled invalid tool configuration: " + e.getClass().getSimpleName());
         }
     }
     
@@ -1074,17 +1091,17 @@ public class Example {
         
         // Demo 1: Standard TTS with different PlayAI voices
         System.out.println("1. Standard Text-to-Speech:");
-//        demonstrateStandardTTS(client);
+        demonstrateStandardTTS(client);
         
         // Demo 2: PlayAI TTS with enhanced features
         System.out.println("\n2. PlayAI TTS (High Quality):");
-//        demonstratePlayAITTS(client);
+        demonstratePlayAITTS(client);
         
         // Demo 3: TTS with different formats and speeds
         System.out.println("\n3. Advanced TTS Configuration:");
-//        demonstrateAdvancedTTS(client);
+        demonstrateAdvancedTTS(client);
         
-     // Demo 4: Speech-to-Text Transcription
+        // Demo 4: Speech-to-Text Transcription
         System.out.println("\n4. Speech-to-Text Transcription:");
         demonstrateTranscription(client);
         
@@ -1116,7 +1133,7 @@ public class Example {
                     
                     if (response.isSuccessful()) {
                         SpeechResponse speechResponse = response.getData();
-                        System.out.println("  ✓ " + voice + ": Generated " + 
+                        System.out.println("  * " + voice + ": Generated " + 
                                          speechResponse.getAudio().length + " bytes of audio");
                         
                         // Save the audio file
@@ -1124,19 +1141,19 @@ public class Example {
                         String savedPath = saveAudioToFile(speechResponse.getAudio(), filename, "mp3");
                         
                         if (savedPath != null) {
-                            System.out.println("  ✓ Saved as: " + filename);
+                            System.out.println("  * Saved as: " + filename);
                         }
                     } else {
-                        System.err.println("  ✗ " + voice + " failed with status: " + response.getStatusCode());
+                        System.err.println("  x " + voice + " failed with status: " + response.getStatusCode());
                     }
                     
                 } catch (Exception e) {
-                    System.err.println("  ✗ " + voice + " error: " + e.getMessage());
+                    System.err.println("  x " + voice + " error: " + e.getMessage());
                 }
             }
             
         } catch (Exception e) {
-            System.err.println("✗ Standard TTS demo error: " + e.getMessage());
+            System.err.println("x Standard TTS demo error: " + e.getMessage());
         }
     }
 
@@ -1158,24 +1175,24 @@ public class Example {
             
             if (response.isSuccessful()) {
                 SpeechResponse speechResponse = response.getData();
-                System.out.println("✓ PlayAI TTS successful!");
-                System.out.println("✓ Generated " + speechResponse.getAudio().length + " bytes of high-quality audio");
-                System.out.println("✓ Voice: Fritz-PlayAI");
-                System.out.println("✓ Speed: 1.2x");
+                System.out.println("* PlayAI TTS successful!");
+                System.out.println("* Generated " + speechResponse.getAudio().length + " bytes of high-quality audio");
+                System.out.println("* Voice: Fritz-PlayAI");
+                System.out.println("* Speed: 1.2x");
                 
                 // Save the audio file
                 String filename = generateTimestampedFilename("playai_high_quality", "mp3");
                 String savedPath = saveAudioToFile(speechResponse.getAudio(), filename, "mp3");
                 
                 if (savedPath != null) {
-                    System.out.println("✓ Saved as: " + filename);
+                    System.out.println("* Saved as: " + filename);
                 }
             } else {
-                System.err.println("✗ PlayAI TTS failed with status: " + response.getStatusCode());
+                System.err.println("x PlayAI TTS failed with status: " + response.getStatusCode());
             }
             
         } catch (Exception e) {
-            System.err.println("✗ PlayAI TTS error: " + e.getMessage());
+            System.err.println("x PlayAI TTS error: " + e.getMessage());
         }
     }
 
@@ -1202,7 +1219,7 @@ public class Example {
                     
                     if (response.isSuccessful()) {
                         SpeechResponse speechResponse = response.getData();
-                        System.out.println("✓ Speed " + speed + "x: Success - " + 
+                        System.out.println("* Speed " + speed + "x: Success - " + 
                                          speechResponse.getAudio().length + " bytes");
                         
                         // Save the audio file
@@ -1211,14 +1228,14 @@ public class Example {
                         String savedPath = saveAudioToFile(speechResponse.getAudio(), filename, "mp3");
                         
                         if (savedPath != null) {
-                            System.out.println("  ✓ Saved as: " + filename);
+                            System.out.println("  * Saved as: " + filename);
                         }
                     } else {
-                        System.err.println("✗ Speed " + speed + "x failed");
+                        System.err.println("x Speed " + speed + "x failed");
                     }
                     
                 } catch (Exception e) {
-                    System.err.println("✗ Speed " + speed + "x error: " + e.getMessage());
+                    System.err.println("x Speed " + speed + "x error: " + e.getMessage());
                 }
             }
             
@@ -1237,7 +1254,7 @@ public class Example {
                     
                     if (response.isSuccessful()) {
                         SpeechResponse speechResponse = response.getData();
-                        System.out.println("✓ Format " + format + ": Success - " + 
+                        System.out.println("* Format " + format + ": Success - " + 
                                          speechResponse.getAudio().length + " bytes");
                         
                         // Save the audio file
@@ -1246,19 +1263,19 @@ public class Example {
                         String savedPath = saveAudioToFile(speechResponse.getAudio(), filename, format);
                         
                         if (savedPath != null) {
-                            System.out.println("  ✓ Saved as: " + filename);
+                            System.out.println("  * Saved as: " + filename);
                         }
                     } else {
-                        System.err.println("✗ Format " + format + " failed");
+                        System.err.println("x Format " + format + " failed");
                     }
                     
                 } catch (Exception e) {
-                    System.err.println("✗ Format " + format + " error: " + e.getMessage());
+                    System.err.println("x Format " + format + " error: " + e.getMessage());
                 }
             }
             
         } catch (Exception e) {
-            System.err.println("✗ Advanced TTS demo error: " + e.getMessage());
+            System.err.println("x Advanced TTS demo error: " + e.getMessage());
         }
     }
     
@@ -1269,7 +1286,7 @@ public class Example {
      */
     private static void demonstrateTranscription(GroqClient client) {
         try {
-            System.out.println("✓ Speech-to-Text Transcription Demo:");
+            System.out.println("* Speech-to-Text Transcription Demo:");
             System.out.println("  Note: Transcription converts speech to text in the original language");
             
             String[] audioFiles = {
@@ -1284,13 +1301,13 @@ public class Example {
                     Path filePath = Paths.get(audioFile);
                     
                     if (!Files.exists(filePath)) {
-                        System.err.println("  ✗ Audio file not found: " + filePath.toAbsolutePath());
-                        System.out.println("  ✓ Please ensure audio files exist at: " + audioFile);
+                        System.err.println("  x Audio file not found: " + filePath.toAbsolutePath());
+                        System.out.println("  * Please ensure audio files exist at: " + audioFile);
                         continue;
                     }
                     
-                    System.out.println("  ✓ Found audio file: " + filePath.toAbsolutePath());
-                    System.out.println("  ✓ File size: " + Files.size(filePath) + " bytes");
+                    System.out.println("  * Found audio file: " + filePath.toAbsolutePath());
+                    System.out.println("  * File size: " + Files.size(filePath) + " bytes");
                     
                     // Create transcription request with file path
                     TranscriptionRequest request = new TranscriptionRequest();
@@ -1301,10 +1318,10 @@ public class Example {
                     request.setTemperature(0.0);
                     request.setPrompt("This is a demonstration of speech recognition.");
                     
-                    System.out.println("  ✓ Sending transcription request...");
-                    System.out.println("  ✓ Model: " + request.getModel());
-                    System.out.println("  ✓ Language: " + request.getLanguage());
-                    System.out.println("  ✓ Format: " + request.getResponseFormat());
+                    System.out.println("  * Sending transcription request...");
+                    System.out.println("  * Model: " + request.getModel());
+                    System.out.println("  * Language: " + request.getLanguage());
+                    System.out.println("  * Format: " + request.getResponseFormat());
                     
                     GroqResponse<Transcription> response = client.audio().createTranscription(request);
                     
@@ -1312,9 +1329,9 @@ public class Example {
                         Transcription transcription = response.getData();
                         String transcribedText = transcription.getText();
                         
-                        System.out.println("  ✓ Transcription successful!");
-                        System.out.println("  ✓ Extracted text: " + transcribedText);
-                        System.out.println("  ✓ Response status: " + response.getStatusCode());
+                        System.out.println("  * Transcription successful!");
+                        System.out.println("  * Extracted text: " + transcribedText);
+                        System.out.println("  * Response status: " + response.getStatusCode());
                         
                         // Save transcription to file
                         String transcriptFilename = generateTimestampedFilename(
@@ -1322,22 +1339,22 @@ public class Example {
                         Path transcriptPath = Paths.get(AUDIO_OUTPUT_DIR, transcriptFilename);
                         
                         Files.write(transcriptPath, transcribedText.getBytes());
-                        System.out.println("  ✓ Transcript saved to: " + transcriptPath.toAbsolutePath());
+                        System.out.println("  * Transcript saved to: " + transcriptPath.toAbsolutePath());
                         
                     } else {
-                        System.err.println("  ✗ Transcription failed with status: " + response.getStatusCode());
+                        System.err.println("  x Transcription failed with status: " + response.getStatusCode());
                     }
                     
                 } catch (Exception e) {
-                    System.err.println("  ✗ Error processing " + audioFile + ": " + e.getMessage());
+                    System.err.println("  x Error processing " + audioFile + ": " + e.getMessage());
                     e.printStackTrace();
                 }
             }            
             // Demonstrate different transcription configurations
-            System.out.println("\n✓ Advanced Transcription Features:");
+            System.out.println("\n* Advanced Transcription Features:");
             demonstrateAdvancedTranscription(client);
         } catch (Exception e) {
-            System.err.println("✗ Transcription demo error: " + e.getMessage());
+            System.err.println("x Transcription demo error: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -1349,7 +1366,7 @@ public class Example {
      */
     private static void demonstrateTranslation(GroqClient client) {
         try {
-            System.out.println("✓ Audio Translation Demo:");
+            System.out.println("* Audio Translation Demo:");
             System.out.println("  Note: This demonstrates translating Spanish audio to English text");
             
             String[] audioFiles = {
@@ -1364,12 +1381,12 @@ public class Example {
                     Path filePath = Paths.get(audioFile);
                     
                     if (!Files.exists(filePath)) {
-                        System.err.println("  ✗ Audio file not found: " + filePath.toAbsolutePath());
+                        System.err.println("  x Audio file not found: " + filePath.toAbsolutePath());
                         continue;
                     }
                     
-                    System.out.println("  ✓ Found audio file: " + filePath.toAbsolutePath());
-                    System.out.println("  ✓ File size: " + Files.size(filePath) + " bytes");
+                    System.out.println("  * Found audio file: " + filePath.toAbsolutePath());
+                    System.out.println("  * File size: " + Files.size(filePath) + " bytes");
                     
                     // Create translation request with file path
                     TranslationRequest request = new TranslationRequest();
@@ -1380,11 +1397,11 @@ public class Example {
                     request.setTemperature(0.1); // Lower temperature for more consistent translations
                     request.setLanguage("es");
                     
-                    System.out.println("  ✓ Sending translation request...");
-                    System.out.println("  ✓ Model: " + request.getModel());
-                    System.out.println("  ✓ Target Language: English");
-                    System.out.println("  ✓ Format: " + request.getResponseFormat());
-                    System.out.println("  ✓ Prompt: " + request.getPrompt());
+                    System.out.println("  * Sending translation request...");
+                    System.out.println("  * Model: " + request.getModel());
+                    System.out.println("  * Target Language: English");
+                    System.out.println("  * Format: " + request.getResponseFormat());
+                    System.out.println("  * Prompt: " + request.getPrompt());
                     
                     GroqResponse<Translation> response = client.audio().createTranslation(request);
                     
@@ -1392,9 +1409,9 @@ public class Example {
                         Translation translation = response.getData();
                         String translatedText = translation.getText();
                         
-                        System.out.println("  ✓ Translation to English successful!");
-                        System.out.println("  ✓ Translated text (English): " + translatedText);
-                        System.out.println("  ✓ Response status: " + response.getStatusCode());
+                        System.out.println("  * Translation to English successful!");
+                        System.out.println("  * Translated text (English): " + translatedText);
+                        System.out.println("  * Response status: " + response.getStatusCode());
                         
                         // Save translation to file
                         String translationFilename = generateTimestampedFilename(
@@ -1402,27 +1419,25 @@ public class Example {
                         Path translationPath = Paths.get(AUDIO_OUTPUT_DIR, translationFilename);
                         
                         Files.write(translationPath, translatedText.getBytes());
-                        System.out.println("  ✓ Spanish translation saved to: " + translationPath.toAbsolutePath());
+                        System.out.println("  * Spanish translation saved to: " + translationPath.toAbsolutePath());
                         
                     } else {
-                        System.err.println("  ✗ Translation failed with status: " + response.getStatusCode());
+                        System.err.println("  x Translation failed with status: " + response.getStatusCode());
                     }
                     
                 } catch (Exception e) {
-                    System.err.println("  ✗ Error processing " + audioFile + ": " + e.getMessage());
+                    System.err.println("  x Error processing " + audioFile + ": " + e.getMessage());
                     e.printStackTrace();
                 }
             }            
         } catch (Exception e) {
-            System.err.println("✗ Spanish translation demo error: " + e.getMessage());
+            System.err.println("x Spanish translation demo error: " + e.getMessage());
             e.printStackTrace();
         }
     }
 
     /**
      * Demonstrates advanced transcription features with different configurations.
-     * 
-     * @param client the GroqClient instance to use for API calls
      */
     private static void demonstrateAdvancedTranscription(GroqClient client) {
         try {
@@ -1430,7 +1445,7 @@ public class Example {
             Path filePath = Paths.get(testAudioFile);
             
             if (!Files.exists(filePath)) {
-                System.out.println("  ✗ Test audio file not found for advanced features");
+                System.out.println("  x Test audio file not found for advanced features");
                 return;
             }
             
@@ -1443,7 +1458,7 @@ public class Example {
             
             GroqResponse<Transcription> simpleResponse = client.audio().createTranscription(simpleRequest);
             if (simpleResponse.isSuccessful()) {
-                System.out.println("    ✓ Text format: " + 
+                System.out.println("    * Text format: " + 
                     (simpleResponse.getData().getText() != null ? 
                      simpleResponse.getData().getText().substring(0, Math.min(100, simpleResponse.getData().getText().length())) + "..." : 
                      "No text"));
@@ -1458,8 +1473,8 @@ public class Example {
             
             GroqResponse<Transcription> jsonResponse = client.audio().createTranscription(jsonRequest);
             if (jsonResponse.isSuccessful()) {
-                System.out.println("    ✓ JSON format successful");
-                System.out.println("    ✓ Transcribed text length: " + 
+                System.out.println("    * JSON format successful");
+                System.out.println("    * Transcribed text length: " + 
                     (jsonResponse.getData().getText() != null ? jsonResponse.getData().getText().length() : 0));
             }
             
@@ -1473,7 +1488,7 @@ public class Example {
             
             GroqResponse<Transcription> langResponse = client.audio().createTranscription(langRequest);
             if (langResponse.isSuccessful()) {
-                System.out.println("    ✓ Language-specific transcription successful");
+                System.out.println("    * Language-specific transcription successful");
             }
             
             // Demo 4: With temperature for variability
@@ -1486,13 +1501,13 @@ public class Example {
             
             GroqResponse<Transcription> tempResponse = client.audio().createTranscription(tempRequest);
             if (tempResponse.isSuccessful()) {
-                System.out.println("    ✓ Temperature-based transcription successful");
+                System.out.println("    * Temperature-based transcription successful");
             }
             
-            System.out.println("  ✓ Advanced transcription features demonstrated");
+            System.out.println("  * Advanced transcription features demonstrated");
             
         } catch (Exception e) {
-            System.err.println("  ✗ Advanced transcription error: " + e);
+            System.err.println("  x Advanced transcription error: " + e);
             e.printStackTrace();
         }
     }
@@ -1527,7 +1542,7 @@ public class Example {
             
             if (response.isSuccessful()) {
                 BatchList batchList = response.getData();
-                System.out.println("✓ Retrieved " + (batchList.getData() != null ? batchList.getData().size() : 0) + " batches");
+                System.out.println("* Retrieved " + (batchList.getData() != null ? batchList.getData().size() : 0) + " batches");
                 
                 if (batchList.getData() != null && !batchList.getData().isEmpty()) {
                     batchList.getData().stream()
@@ -1542,14 +1557,14 @@ public class Example {
                             }
                         });
                 } else {
-                    System.out.println("✓ No batches found (this is normal for new accounts)");
+                    System.out.println("* No batches found (this is normal for new accounts)");
                 }
             } else {
-                System.err.println("✗ Batch listing failed with status: " + response.getStatusCode());
+                System.err.println("x Batch listing failed with status: " + response.getStatusCode());
             }
             
         } catch (Exception e) {
-            System.err.println("✗ Batch listing error: " + e.getMessage());
+            System.err.println("x Batch listing error: " + e.getMessage());
         }
     }
 
@@ -1565,22 +1580,22 @@ public class Example {
             request.setEndpoint("/v1/chat/completions");
             request.setCompletionWindow("24h");
             
-            System.out.println("✓ Batch creation request structure demonstrated");
-            System.out.println("✓ Endpoint: " + request.getEndpoint());
-            System.out.println("✓ Completion window: " + request.getCompletionWindow());
-            System.out.println("✓ In real usage, provide actual input file ID");
+            System.out.println("* Batch creation request structure demonstrated");
+            System.out.println("* Endpoint: " + request.getEndpoint());
+            System.out.println("* Completion window: " + request.getCompletionWindow());
+            System.out.println("* In real usage, provide actual input file ID");
             
             // Uncomment the following lines when you have actual file IDs:
             /*
             GroqResponse<Batch> response = client.batches().create(request);
             if (response.isSuccessful()) {
                 Batch batch = response.getData();
-                System.out.println("✓ Batch created: " + batch.getId() + " (status: " + batch.getStatus() + ")");
+                System.out.println("* Batch created: " + batch.getId() + " (status: " + batch.getStatus() + ")");
             }
             */
             
         } catch (Exception e) {
-            System.err.println("✗ Batch creation error: " + e.getMessage());
+            System.err.println("x Batch creation error: " + e.getMessage());
         }
     }
 
@@ -1601,24 +1616,24 @@ public class Example {
                 
                 if (response.isSuccessful()) {
                     Batch batch = response.getData();
-                    System.out.println("✓ Retrieved batch: " + batch.getId());
-                    System.out.println("✓ Status: " + batch.getStatus());
-                    System.out.println("✓ Created: " + batch.getCreatedAt());
+                    System.out.println("* Retrieved batch: " + batch.getId());
+                    System.out.println("* Status: " + batch.getStatus());
+                    System.out.println("* Created: " + batch.getCreatedAt());
                     
                     if (batch.getRequestCounts() != null) {
-                        System.out.println("✓ Requests: " + batch.getRequestCounts().getTotal() + " total, " +
+                        System.out.println("* Requests: " + batch.getRequestCounts().getTotal() + " total, " +
                                          batch.getRequestCounts().getCompleted() + " completed, " +
                                          batch.getRequestCounts().getFailed() + " failed");
                     }
                 } else {
-                    System.err.println("✗ Batch retrieval failed with status: " + response.getStatusCode());
+                    System.err.println("x Batch retrieval failed with status: " + response.getStatusCode());
                 }
             } else {
-                System.out.println("✓ No batches available to retrieve (this is normal for new accounts)");
+                System.out.println("* No batches available to retrieve (this is normal for new accounts)");
             }
             
         } catch (Exception e) {
-            System.err.println("✗ Batch retrieval error: " + e.getMessage());
+            System.err.println("x Batch retrieval error: " + e.getMessage());
         }
     }
 
@@ -1652,7 +1667,7 @@ public class Example {
             
             if (response.isSuccessful()) {
                 FileList fileList = response.getData();
-                System.out.println("✓ Retrieved " + (fileList.getData() != null ? fileList.getData().size() : 0) + " files");
+                System.out.println("* Retrieved " + (fileList.getData() != null ? fileList.getData().size() : 0) + " files");
                 
                 if (fileList.getData() != null && !fileList.getData().isEmpty()) {
                     fileList.getData().stream()
@@ -1666,14 +1681,14 @@ public class Example {
                                              ", Status: " + file.getStatus());
                         });
                 } else {
-                    System.out.println("✓ No files found (this is normal for new accounts)");
+                    System.out.println("* No files found (this is normal for new accounts)");
                 }
             } else {
-                System.err.println("✗ File listing failed with status: " + response.getStatusCode());
+                System.err.println("x File listing failed with status: " + response.getStatusCode());
             }
             
         } catch (Exception e) {
-            System.err.println("✗ File listing error: " + e.getMessage());
+            System.err.println("x File listing error: " + e.getMessage());
         }
     }
 
@@ -1689,22 +1704,22 @@ public class Example {
             request.setPurpose("fine-tune");
             request.setFilename("training_data.jsonl");
             
-            System.out.println("✓ File upload request structure demonstrated");
-            System.out.println("✓ Purpose: " + request.getPurpose());
-            System.out.println("✓ Filename: " + request.getFilename());
-            System.out.println("✓ In real usage, provide actual file content");
+            System.out.println("* File upload request structure demonstrated");
+            System.out.println("* Purpose: " + request.getPurpose());
+            System.out.println("* Filename: " + request.getFilename());
+            System.out.println("* In real usage, provide actual file content");
             
             // Uncomment the following lines when you have actual file content:
             /*
             GroqResponse<FileObject> response = client.files().upload(request);
             if (response.isSuccessful()) {
                 FileObject file = response.getData();
-                System.out.println("✓ File uploaded: " + file.getFilename() + " (ID: " + file.getId() + ")");
+                System.out.println("* File uploaded: " + file.getFilename() + " (ID: " + file.getId() + ")");
             }
             */
             
         } catch (Exception e) {
-            System.err.println("✗ File upload error: " + e.getMessage());
+            System.err.println("x File upload error: " + e.getMessage());
         }
     }
 
@@ -1723,39 +1738,39 @@ public class Example {
             String filename = "groq_sdk_demo_" + System.currentTimeMillis();
             String purpose = "assistants";
             
-            System.out.println("✓ Created sample JSON content for upload");
-            System.out.println("✓ JSON size: " + jsonContent.length() + " characters");
+            System.out.println("* Created sample JSON content for upload");
+            System.out.println("* JSON size: " + jsonContent.length() + " characters");
             
             // Note: Uncomment to actually upload (commented to avoid creating real files in demo)
             /*
             GroqResponse<FileObject> uploadResponse = client.files().uploadJson(jsonContent, filename, purpose);
             if (uploadResponse.isSuccessful()) {
                 FileObject uploadedFile = uploadResponse.getData();
-                System.out.println("✓ JSON file uploaded: " + uploadedFile.getFilename());
-                System.out.println("✓ File ID: " + uploadedFile.getId());
+                System.out.println("* JSON file uploaded: " + uploadedFile.getFilename());
+                System.out.println("* File ID: " + uploadedFile.getId());
                 
                 // Demonstrate file retrieval
                 GroqResponse<FileObject> retrieveResponse = client.files().retrieve(uploadedFile.getId());
                 if (retrieveResponse.isSuccessful()) {
-                    System.out.println("✓ File retrieved: " + retrieveResponse.getData().getFilename());
+                    System.out.println("* File retrieved: " + retrieveResponse.getData().getFilename());
                 }
                 
                 // Demonstrate file content retrieval
                 GroqResponse<String> contentResponse = client.files().retrieveContent(uploadedFile.getId());
                 if (contentResponse.isSuccessful()) {
-                    System.out.println("✓ File content retrieved: " + contentResponse.getData().length() + " characters");
+                    System.out.println("* File content retrieved: " + contentResponse.getData().length() + " characters");
                 }
                 
                 // Demonstrate file deletion (commented to avoid actual deletion in demo)
                 // GroqResponse<FileDeleteResponse> deleteResponse = client.files().delete(uploadedFile.getId());
                 // if (deleteResponse.isSuccessful() && deleteResponse.getData().getDeleted()) {
-                //     System.out.println("✓ File deleted successfully");
+                //     System.out.println("* File deleted successfully");
                 // }
             }
             */
             
         } catch (Exception e) {
-            System.err.println("✗ File operations with JSON error: " + e.getMessage());
+            System.err.println("x File operations with JSON error: " + e.getMessage());
         }
     }
  // Add this method to demonstrate reasoning functionality
@@ -1778,7 +1793,7 @@ public class Example {
                 ChatChoice choice = completion.getChoices().get(0);
                 ChatMessage assistantMessage = choice.getMessage();
                 
-                System.out.println("✓ Reasoning response:");
+                System.out.println("* Reasoning response:");
                 
                 // Display reasoning if available
                 if (assistantMessage.getReasoning() != null && !assistantMessage.getReasoning().isEmpty()) {
@@ -1790,14 +1805,14 @@ public class Example {
                     System.out.println("Content: " + assistantMessage.getContent());
                 }
                 
-                System.out.println("✓ Finish reason: " + choice.getFinishReason());
+                System.out.println("* Finish reason: " + choice.getFinishReason());
                 
             } else {
-                System.err.println("✗ Reasoning demo failed with status: " + response.getStatusCode());
+                System.err.println("x Reasoning demo failed with status: " + response.getStatusCode());
             }
             
         } catch (Exception e) {
-            System.err.println("✗ Reasoning demo error: " + e.getMessage());
+            System.err.println("x Reasoning demo error: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -1828,7 +1843,7 @@ public class Example {
             if (response.isSuccessful()) {
                 ChatMessage assistantMessage = response.getData().getChoices().get(0).getMessage();
                 
-                System.out.println("✓ Reasoning with tools:");
+                System.out.println("* Reasoning with tools:");
                 
                 // Display reasoning
                 if (assistantMessage.getReasoning() != null && !assistantMessage.getReasoning().isEmpty()) {
@@ -1862,7 +1877,7 @@ public class Example {
                         
                         if (followupResponse.isSuccessful()) {
                             ChatMessage finalMessage = followupResponse.getData().getChoices().get(0).getMessage();
-                            System.out.println("✓ Final response with reasoning:");
+                            System.out.println("* Final response with reasoning:");
                             if (finalMessage.getReasoning() != null) {
                                 System.out.println("Reasoning: " + finalMessage.getReasoning());
                             }
@@ -1874,11 +1889,11 @@ public class Example {
                 }
                 
             } else {
-                System.err.println("✗ Reasoning with tools failed with status: " + response.getStatusCode());
+                System.err.println("x Reasoning with tools failed with status: " + response.getStatusCode());
             }
             
         } catch (Exception e) {
-            System.err.println("✗ Reasoning with tools error: " + e.getMessage());
+            System.err.println("x Reasoning with tools error: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -1893,10 +1908,10 @@ public class Example {
         
         try {
             String[] visionModels = client.vision().getCommonVisionModels();
-            System.out.println("✓ Available vision models: " + Arrays.toString(visionModels));
+            System.out.println("* Available vision models: " + Arrays.toString(visionModels));
             
             String visionModel = visionModels[0];
-            System.out.println("✓ Using vision model: " + visionModel);
+            System.out.println("* Using vision model: " + visionModel);
             
             // Demo 1: Using remote URL
             System.out.println("\n1. Testing with Remote Image URL:");
@@ -1911,7 +1926,7 @@ public class Example {
             demonstrateImageBytesAnalysis(client, visionModel);
             
         } catch (Exception e) {
-            System.err.println("✗ Vision operations demo error: " + e.getMessage());
+            System.err.println("x Vision operations demo error: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -1924,16 +1939,16 @@ public class Example {
             Path imagePath = Paths.get("src/main/resources/images/input_2.jpg");
             
             if (!Files.exists(imagePath)) {
-                System.out.println("✗ Local image file not found: " + imagePath.toAbsolutePath());
-                System.out.println("✓ Please ensure the image file exists at: src/main/resources/images/input_1.jpg");
+                System.out.println("x Local image file not found: " + imagePath.toAbsolutePath());
+                System.out.println("* Please ensure the image file exists at: src/main/resources/images/input_1.jpg");
                 return;
             }
             
-            System.out.println("✓ Using image from: " + imagePath.toAbsolutePath());
+            System.out.println("* Using image from: " + imagePath.toAbsolutePath());
             
             // Read image as bytes
             byte[] imageBytes = Files.readAllBytes(imagePath);
-            System.out.println("✓ Read image bytes: " + imageBytes.length + " bytes");
+            System.out.println("* Read image bytes: " + imageBytes.length + " bytes");
             
             String prompt = "What's in this image? Describe it in detail.";
             String mimeType = "image/jpeg";
@@ -1954,20 +1969,20 @@ public class Example {
                     ChatChoice choice = completion.getChoices().get(0);
                     if (choice.getMessage() != null && choice.getMessage().getContent() != null) {
                         String analysis = choice.getMessage().getContent();
-                        System.out.println("✓ Image Bytes Analysis: " + analysis);
-                        System.out.println("✓ Token usage: " + completion.getUsage().getTotalTokens() + " tokens");
+                        System.out.println("* Image Bytes Analysis: " + analysis);
+                        System.out.println("* Token usage: " + completion.getUsage().getTotalTokens() + " tokens");
                     } else {
-                        System.out.println("✓ No analysis content received");
+                        System.out.println("* No analysis content received");
                     }
                 } else {
-                    System.out.println("✓ No choices in response");
+                    System.out.println("* No choices in response");
                 }
             } else {
-                System.err.println("✗ Image bytes analysis failed with status: " + response.getStatusCode());
+                System.err.println("x Image bytes analysis failed with status: " + response.getStatusCode());
             }
             
         } catch (Exception e) {
-            System.err.println("✗ Image bytes analysis error: " + e.getMessage());
+            System.err.println("x Image bytes analysis error: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -1980,7 +1995,7 @@ public class Example {
             String testImageUrl = "https://wallpaperaccess.com/full/5324597.jpg";
             String prompt = "Who is in the image ?.";
             
-            System.out.println("✓ Testing with remote URL: " + testImageUrl);
+            System.out.println("* Testing with remote URL: " + testImageUrl);
             
             VisionRequest request = client.vision().createVisionRequestWithUrl(model, testImageUrl, prompt);
             request.setMaxTokens(500);
@@ -1996,20 +2011,20 @@ public class Example {
                     ChatChoice choice = completion.getChoices().get(0);
                     if (choice.getMessage() != null && choice.getMessage().getContent() != null) {
                         String analysis = choice.getMessage().getContent();
-                        System.out.println("✓ Remote Image Analysis: " + analysis);
-                        System.out.println("✓ Token usage: " + completion.getUsage().getTotalTokens() + " tokens");
+                        System.out.println("* Remote Image Analysis: " + analysis);
+                        System.out.println("* Token usage: " + completion.getUsage().getTotalTokens() + " tokens");
                     } else {
-                        System.out.println("✓ No analysis content received");
+                        System.out.println("* No analysis content received");
                     }
                 } else {
-                    System.out.println("✓ No choices in response");
+                    System.out.println("* No choices in response");
                 }
             } else {
-                System.err.println("✗ Remote image analysis failed with status: " + response.getStatusCode());
+                System.err.println("x Remote image analysis failed with status: " + response.getStatusCode());
             }
             
         } catch (Exception e) {
-            System.err.println("✗ Remote image analysis error: " + e.getMessage());
+            System.err.println("x Remote image analysis error: " + e.getMessage());
         }
     }
 
@@ -2021,12 +2036,12 @@ public class Example {
             Path imagePath = Paths.get("src/main/resources/images/input_1.jpg");
             
             if (!Files.exists(imagePath)) {
-                System.out.println("✗ Local image file not found: " + imagePath.toAbsolutePath());
-                System.out.println("✓ Please ensure the image file exists at: src/main/resources/images/input_1.jpg");
+                System.out.println("x Local image file not found: " + imagePath.toAbsolutePath());
+                System.out.println("* Please ensure the image file exists at: src/main/resources/images/input_1.jpg");
                 return;
             }
             
-            System.out.println("✓ Using local image: " + imagePath.toAbsolutePath());
+            System.out.println("* Using local image: " + imagePath.toAbsolutePath());
             
             String prompt = "What is the text in the image ?.";
             
@@ -2046,21 +2061,573 @@ public class Example {
                     ChatChoice choice = completion.getChoices().get(0);
                     if (choice.getMessage() != null && choice.getMessage().getContent() != null) {
                         String analysis = choice.getMessage().getContent();
-                        System.out.println("✓ Local Image Analysis: " + analysis);
-                        System.out.println("✓ Token usage: " + completion.getUsage().getTotalTokens() + " tokens");
+                        System.out.println("* Local Image Analysis: " + analysis);
+                        System.out.println("* Token usage: " + completion.getUsage().getTotalTokens() + " tokens");
                     } else {
-                        System.out.println("✓ No analysis content received");
+                        System.out.println("* No analysis content received");
                     }
                 } else {
-                    System.out.println("✓ No choices in response");
+                    System.out.println("* No choices in response");
                 }
             } else {
-                System.err.println("✗ Local image analysis failed with status: " + response.getStatusCode());
+                System.err.println("x Local image analysis failed with status: " + response.getStatusCode());
             }
             
         } catch (Exception e) {
-            System.err.println("✗ Local image analysis error: " + e.getMessage());
+            System.err.println("x Local image analysis error: " + e.getMessage());
             e.printStackTrace();
         }
+    }
+    
+    /**
+     * Demonstrates Response API operations with reasoning.
+     * 
+     * @param client the GroqClient instance to use for API calls
+     */
+    private static void demonstrateResponseAPI(GroqClient client) {
+        System.out.println("\n=== Response API Demo ===");
+        
+        try {
+            // Demo 1: Reasoning with low effort
+            System.out.println("1. Reasoning with Low Effort:");
+            demonstrateReasoningResponse(client);
+            
+            // Demo 2: Code Interpreter
+            System.out.println("\n2. Code Interpreter:");
+            demonstrateCodeInterpreterResponse(client);
+            
+            // Demo 3: Browser Search
+            System.out.println("\n3. Browser Search:");
+            demonstrateBrowserSearchResponse(client);
+            
+            // Demo 4: Complex input with messages
+            System.out.println("\n4. Complex Message Input:");
+            demonstrateComplexResponse(client);
+            
+        } catch (Exception e) {
+            System.err.println("x Response API demo error: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Demonstrates Response API with reasoning.
+     */
+    private static void demonstrateReasoningResponse(GroqClient client) {
+        try {
+            com.groq.sdk.models.responses.ResponseRequest request = 
+                new com.groq.sdk.models.responses.ResponseRequest("openai/gpt-oss-20b", 
+                "How are AI models trained? Be brief.");
+            request.setReasoning(new com.groq.sdk.models.responses.ReasoningConfig("low"));
+            request.setTemperature(1.0);
+            request.setTopP(1.0);
+            
+            System.out.println("* Sending reasoning request...");
+            
+            com.groq.sdk.models.GroqResponse<com.groq.sdk.models.responses.Response> response = 
+                client.responses().create(request);
+            
+            if (response.isSuccessful()) {
+                com.groq.sdk.models.responses.Response resp = response.getData();
+                System.out.println("* Response ID: " + resp.getId());
+                System.out.println("* Status: " + resp.getStatus());
+                System.out.println("* Model: " + resp.getModel());
+                
+                // Process outputs
+                for (com.groq.sdk.models.responses.ResponseOutput output : resp.getOutput()) {
+                    if (output instanceof com.groq.sdk.models.responses.ReasoningOutput) {
+                        com.groq.sdk.models.responses.ReasoningOutput reasoning = 
+                            (com.groq.sdk.models.responses.ReasoningOutput) output;
+                        System.out.println("* Reasoning:");
+                        for (com.groq.sdk.models.responses.ReasoningContent content : reasoning.getContent()) {
+                            System.out.println("  - " + content.getText());
+                        }
+                    } else if (output instanceof com.groq.sdk.models.responses.MessageOutput) {
+                        com.groq.sdk.models.responses.MessageOutput message = 
+                            (com.groq.sdk.models.responses.MessageOutput) output;
+                        System.out.println("* Final Response:");
+                        for (com.groq.sdk.models.responses.MessageContent content : message.getContent()) {
+                            System.out.println("  " + content.getText());
+                        }
+                    }
+                }
+                
+                // Show usage
+                if (resp.getUsage() != null) {
+                    System.out.println("* Usage: " + resp.getUsage().getTotalTokens() + " tokens total");
+                    System.out.println("* Input: " + resp.getUsage().getInputTokens() + " tokens");
+                    System.out.println("* Output: " + resp.getUsage().getOutputTokens() + " tokens");
+                }
+            } else {
+                System.err.println("x Reasoning response failed with status: " + response.getStatusCode());
+            }
+            
+        } catch (Exception e) {
+            System.err.println("x Reasoning response error: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Demonstrates Response API with complex message input.
+     */
+    private static void demonstrateComplexResponse(GroqClient client) {
+        try {
+            // Create multiple message inputs
+            List<com.groq.sdk.models.responses.MessageInput> messages = Arrays.asList(
+                new com.groq.sdk.models.responses.MessageInput("system", "You are a helpful assistant."),
+                new com.groq.sdk.models.responses.MessageInput("user", "Explain quantum computing in simple terms.")
+            );
+            
+            com.groq.sdk.models.responses.ResponseRequest request = 
+                new com.groq.sdk.models.responses.ResponseRequest("openai/gpt-oss-20b", messages);
+            request.setReasoning(new com.groq.sdk.models.responses.ReasoningConfig("medium"));
+            request.setMaxOutputTokens(500);
+            
+            System.out.println("* Sending complex message request...");
+            
+            com.groq.sdk.models.GroqResponse<com.groq.sdk.models.responses.Response> response = 
+                client.responses().create(request);
+            
+            if (response.isSuccessful()) {
+                com.groq.sdk.models.responses.Response resp = response.getData();
+                System.out.println("* Complex response received");
+                
+                for (com.groq.sdk.models.responses.ResponseOutput output : resp.getOutput()) {
+                    if (output instanceof com.groq.sdk.models.responses.ReasoningOutput) {
+                        System.out.println("* Reasoning process completed");
+                    } else if (output instanceof com.groq.sdk.models.responses.MessageOutput) {
+                        com.groq.sdk.models.responses.MessageOutput message = 
+                            (com.groq.sdk.models.responses.MessageOutput) output;
+                        for (com.groq.sdk.models.responses.MessageContent content : message.getContent()) {
+                            System.out.println("* Explanation: " + content.getText());
+                        }
+                    }
+                }
+            } else {
+                System.err.println("x Complex response failed with status: " + response.getStatusCode());
+            }
+            
+        } catch (Exception e) {
+            System.err.println("x Complex response error: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Demonstrates Response API with code interpreter.
+     */
+    private static void demonstrateCodeInterpreterResponse(GroqClient client) {
+        try {
+            ResponseRequest request = new ResponseRequest("openai/gpt-oss-20b", 
+                "What is 1312 X 3333? Output only the final answer.");
+            request.setToolChoice("required");
+            
+            // Create code interpreter tool
+            com.groq.sdk.models.chat.ChatTool codeInterpreter = new com.groq.sdk.models.chat.ChatTool();
+            codeInterpreter.setType("code_interpreter");
+            
+            request.setChatTools(Arrays.asList(codeInterpreter));
+            
+            System.out.println("* Sending code interpreter request...");
+            
+            GroqResponse<Response> response = client.responses().create(request);
+            
+            if (response.isSuccessful()) {
+                Response resp = response.getData();
+                System.out.println("* Code interpreter response received");
+                
+                for (ResponseOutput output : resp.getOutput()) {
+                    if (output instanceof MessageOutput) {
+                        MessageOutput message = (MessageOutput) output;
+                        for (MessageContent content : message.getContent()) {
+                            System.out.println("* Result: " + content.getText());
+                        }
+                    }
+                }
+            } else {
+                System.err.println("x Code interpreter failed with status: " + response.getStatusCode());
+            }
+            
+        } catch (Exception e) {
+            System.err.println("x Code interpreter error: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Demonstrates Response API with browser search.
+     */
+    private static void demonstrateBrowserSearchResponse(GroqClient client) {
+        try {
+            ResponseRequest request = new ResponseRequest("openai/gpt-oss-20b", 
+                "Analyze the current weather in San Francisco and provide a detailed forecast.");
+            request.setToolChoice("required");
+            
+            // Create browser search tool
+            com.groq.sdk.models.chat.ChatTool browserSearch = new com.groq.sdk.models.chat.ChatTool();
+            browserSearch.setType("browser_search");
+            
+            request.setChatTools(Arrays.asList(browserSearch));
+            
+            System.out.println("* Sending browser search request...");
+            
+            GroqResponse<Response> response = client.responses().create(request);
+            
+            if (response.isSuccessful()) {
+                Response resp = response.getData();
+                System.out.println("* Browser search response received");
+                
+                for (ResponseOutput output : resp.getOutput()) {
+                    if (output instanceof MessageOutput) {
+                        MessageOutput message = (MessageOutput) output;
+                        for (MessageContent content : message.getContent()) {
+                            System.out.println("* Weather information: " + content.getText());
+                        }
+                    }
+                }
+            } else {
+                System.err.println("x Browser search failed with status: " + response.getStatusCode());
+            }
+            
+        } catch (Exception e) {
+            System.err.println("x Browser search error: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Demonstrates MCP operations using the unified Response API.
+     * 
+     * @param client the GroqClient instance to use for API calls
+     */
+    private static void demonstrateMCPOperations(GroqClient client) {
+        System.out.println("\n=== MCP Operations Demo (Using Response API) ===");
+        
+        try {
+            // Demo 1: HuggingFace MCP Tool
+            System.out.println("1. HuggingFace MCP Tool:");
+            demonstrateHuggingFaceMCP(client);
+            
+            // Demo 2: Multiple MCP Tools
+            System.out.println("\n2. Multiple MCP Tools:");
+            demonstrateMultipleMCPTools(client);
+            
+            // Demo 3: Custom MCP Request
+            System.out.println("\n3. Custom MCP Request:");
+            demonstrateCustomMCPRequest(client);
+            
+        } catch (Exception e) {
+            System.err.println("x MCP operations demo error: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+    /**
+     * Demonstrates MCP with HuggingFace tool.
+     */
+    private static void demonstrateHuggingFaceMCP(GroqClient client) {
+        try {
+            // Create HuggingFace MCP tool definition with validation
+            MCPToolDefinition huggingFaceTool = createValidatedMCPTool(
+                "Huggingface",
+                 null,
+                "https://huggingface.co/mcp", 
+                "never"
+            );
+            
+            System.out.println("* Created validated MCP tool: " + huggingFaceTool);
+            System.out.println("* Sending MCP request with Huggingface tool...");
+            
+            GroqResponse<Response> response = client.mcp().createResponse(
+                "openai/gpt-oss-120b", 
+                "What models are trending on Huggingface ?",
+                huggingFaceTool
+            );
+            
+            processMCPResponse(response, "Huggingface");
+            
+        } catch (IllegalArgumentException e) {
+            System.err.println("x MCP tool validation error: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("x Firecrawl MCP error: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Demonstrates MCP with multiple tools.
+     */
+    private static void demonstrateMultipleMCPTools(GroqClient client) {
+        try {
+            // Create multiple MCP tool definitions with validation
+            List<MCPToolDefinition> mcpTools = Arrays.asList(
+                createValidatedMCPTool(
+                    "firecrawl",
+                    "Web scraping and content extraction",
+                    "https://mcp.firecrawl.dev/<APIKEY>/v2/mcp",
+                    "never"
+                ),
+                createValidatedMCPTool(
+                    "calculator", 
+                    "Mathematical calculations and computations",
+                    "https://mcp.calculator.dev/v1/mcp",
+                    "never"
+                )
+            );
+            
+            System.out.println("* Created " + mcpTools.size() + " validated MCP tools");
+            System.out.println("* Sending MCP request with multiple tools...");
+            
+            GroqResponse<Response> response = client.mcp().createResponse(
+                "openai/gpt-oss-120b",
+                "What's the current weather in Tokyo and calculate the temperature in Fahrenheit if it's 25°C?",
+                mcpTools
+            );
+            
+            processMCPResponse(response, "Multiple Tools");
+            
+        } catch (IllegalArgumentException e) {
+            System.err.println("x MCP tool validation error: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("x Multiple MCP tools error: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Demonstrates custom MCP request with advanced configuration.
+     */
+    private static void demonstrateCustomMCPRequest(GroqClient client) {
+        try {
+            // Create custom message inputs
+            List<MessageInput> messages = Arrays.asList(
+                new MessageInput("system", "You are a helpful assistant with access to web search tools."),
+                new MessageInput("user", "Find the latest news about artificial intelligence and summarize the key points.")
+            );
+            
+            // Create MCP tool
+            MCPToolDefinition newsTool = new MCPToolDefinition(
+                "news-search",
+                "Search for latest news and current events",
+                "https://mcp.news.dev/v1/mcp",
+                "never"
+            );
+            
+            // Create custom request with reasoning
+            ResponseRequest request = new ResponseRequest("openai/gpt-oss-120b", messages);
+            request.setMCPTools(Arrays.asList(newsTool));
+            request.setReasoning(new ReasoningConfig("medium"));
+            request.setMaxOutputTokens(800);
+            request.setTemperature(0.7);
+            request.setToolChoice("auto");
+            
+            System.out.println("* Sending custom MCP request with reasoning...");
+            
+            GroqResponse<Response> response = client.mcp().createResponse(request);
+            
+            processMCPResponse(response, "Custom Request");
+            
+        } catch (Exception e) {
+            System.err.println("x Custom MCP request error: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Processes and displays MCP response outputs.
+     * 
+     * @param response the MCP response to process
+     * @param context context description for logging
+     */
+    private static void processMCPResponse(GroqResponse<Response> response, String context) {
+        if (response.isSuccessful()) {
+            Response resp = response.getData();
+            System.out.println("* " + context + " - Response ID: " + resp.getId());
+            System.out.println("* Status: " + resp.getStatus());
+            System.out.println("* Model: " + resp.getModel());
+            System.out.println("* Number of outputs: " + resp.getOutput().size());
+            
+            // Process different output types
+            for (ResponseOutput output : resp.getOutput()) {
+                processMCPOutput(output);
+            }
+            
+            // Show usage statistics
+            if (resp.getUsage() != null) {
+                System.out.println("* Usage Statistics:");
+                System.out.println("  - Total tokens: " + resp.getUsage().getTotalTokens());
+                System.out.println("  - Input tokens: " + resp.getUsage().getInputTokens());
+                System.out.println("  - Output tokens: " + resp.getUsage().getOutputTokens());
+                
+                if (resp.getUsage().getInputTokensDetails() != null) {
+                    System.out.println("  - Reasoning tokens: " + 
+                        resp.getUsage().getInputTokensDetails().getReasoningTokens());
+                }
+            }
+            
+        } else {
+            System.err.println("x " + context + " failed with status: " + response.getStatusCode());
+        }
+    }
+
+    /**
+     * Processes individual MCP output types.
+     * 
+     * @param output the output to process
+     */
+    private static void processMCPOutput(ResponseOutput output) {
+        if (output instanceof MCPListToolsOutput) {
+            MCPListToolsOutput toolsOutput = (MCPListToolsOutput) output;
+            System.out.println("* MCP Tools Available from " + toolsOutput.getServerLabel() + ":");
+            for (MCPTool tool : toolsOutput.getTools()) {
+                System.out.println("  - " + tool.getName() + ": " + 
+                    (tool.getDescription() != null ? 
+                     tool.getDescription().substring(0, Math.min(80, tool.getDescription().length())) + "..." : 
+                     "No description"));
+            }
+            
+        } else if (output instanceof ReasoningOutput) {
+            ReasoningOutput reasoningOutput = (ReasoningOutput) output;
+            System.out.println("* Model Reasoning:");
+            for (ReasoningContent content : reasoningOutput.getContent()) {
+                System.out.println("  " + content.getText());
+            }
+            
+        } else if (output instanceof MCPCallOutput) {
+            MCPCallOutput callOutput = (MCPCallOutput) output;
+            System.out.println("* MCP Tool Call:");
+            System.out.println("  - Server: " + callOutput.getServerLabel());
+            System.out.println("  - Tool: " + callOutput.getName());
+            System.out.println("  - Arguments: " + 
+                (callOutput.getArguments() != null ? 
+                 callOutput.getArguments().substring(0, Math.min(100, callOutput.getArguments().length())) + "..." : 
+                 "No arguments"));
+            System.out.println("  - Output: " + 
+                (callOutput.getOutput() != null ? 
+                 callOutput.getOutput().substring(0, Math.min(150, callOutput.getOutput().length())) + "..." : 
+                 "No output"));
+            
+        } else if (output instanceof MessageOutput) {
+            MessageOutput messageOutput = (MessageOutput) output;
+            System.out.println("* Final Response (" + messageOutput.getRole() + "):");
+            for (MessageContent content : messageOutput.getContent()) {
+                if (content.getText() != null && !content.getText().trim().isEmpty()) {
+                    // Show truncated response for long outputs
+                    String text = content.getText();
+                    if (text.length() > 200) {
+                        System.out.println("  " + text.substring(0, 200) + "...");
+                        System.out.println("  ... (truncated, full response: " + text.length() + " characters)");
+                    } else {
+                        System.out.println("  " + text);
+                    }
+                }
+            }
+            
+        } else {
+            System.out.println("* Unknown output type: " + output.getType());
+        }
+    }
+
+    /**
+     * Demonstrates simple MCP usage for quick testing.
+     * 
+     * @param client the GroqClient instance to use for API calls
+     */
+    private static void demonstrateSimpleMCP(GroqClient client) {
+        System.out.println("\n=== Simple MCP Demo ===");
+        
+        try {
+            // Simple MCP request without external tools
+            GroqResponse<Response> response = client.responses().create(
+                "openai/gpt-oss-120b", 
+                "Explain the concept of machine learning in three bullet points."
+            );
+            
+            if (response.isSuccessful()) {
+                Response resp = response.getData();
+                System.out.println("* Simple response received");
+                
+                for (ResponseOutput output : resp.getOutput()) {
+                    if (output instanceof MessageOutput) {
+                        MessageOutput message = (MessageOutput) output;
+                        for (MessageContent content : message.getContent()) {
+                            if (content.getText() != null) {
+                                System.out.println("* Response: " + content.getText());
+                            }
+                        }
+                    }
+                }
+            } else {
+                System.err.println("x Simple MCP failed with status: " + response.getStatusCode());
+            }
+            
+        } catch (Exception e) {
+            System.err.println("x Simple MCP error: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Demonstrates MCP error handling and edge cases.
+     * 
+     * @param client the GroqClient instance to use for API calls
+     */
+    private static void demonstrateMCPErrorHandling(GroqClient client) {
+        System.out.println("\n=== MCP Error Handling Demo ===");
+        
+        try {
+            // Test with invalid MCP server URL
+            MCPToolDefinition invalidTool = new MCPToolDefinition(
+                "invalid-tool",
+                "This tool should fail",
+                "https://invalid-mcp-server.example.com/v1/mcp",
+                "never"
+            );
+            
+            System.out.println("* Testing MCP with invalid server URL...");
+            
+            GroqResponse<Response> response = client.mcp().createResponse(
+                "openai/gpt-oss-120b",
+                "This request should demonstrate error handling",
+                invalidTool
+            );
+            
+            if (response.isSuccessful()) {
+                System.out.println("* Unexpected success with invalid MCP server");
+                processMCPResponse(response, "Error Handling");
+            } else {
+                System.out.println("* Properly handled MCP error: HTTP " + response.getStatusCode());
+                System.out.println("* Error message: " + 
+                    (response.getData() != null && response.getData().getError() != null ? 
+                     response.getData().getError().toString() : "Unknown error"));
+            }
+            
+        } catch (Exception e) {
+            System.out.println("* Properly caught MCP exception: " + e.getClass().getSimpleName());
+            System.out.println("* Error message: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Validates and creates an MCP tool definition with proper error handling.
+     * 
+     * @param serverLabel the server label (required)
+     * @param serverDescription the server description
+     * @param serverUrl the server URL (required)  
+     * @param requireApproval the approval requirement
+     * @return a properly configured MCPToolDefinition
+     * @throws IllegalArgumentException if required fields are missing
+     */
+    private static MCPToolDefinition createValidatedMCPTool(String serverLabel, String serverDescription, 
+                                                           String serverUrl, String requireApproval) {
+        if (serverLabel == null || serverLabel.trim().isEmpty()) {
+            throw new IllegalArgumentException("MCP server_label is required");
+        }
+        if (serverUrl == null || serverUrl.trim().isEmpty()) {
+            throw new IllegalArgumentException("MCP server_url is required");
+        }
+        
+        MCPToolDefinition tool = new MCPToolDefinition();
+        tool.setServerLabel(serverLabel.trim());
+        tool.setServerDescription(serverDescription != null ? serverDescription.trim() : "");
+        tool.setServerUrl(serverUrl.trim());
+        tool.setRequireApproval(requireApproval != null ? requireApproval : "never");
+        
+        return tool;
     }
 }

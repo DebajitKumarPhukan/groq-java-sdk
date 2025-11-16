@@ -1,12 +1,11 @@
 # Groq Java SDK
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/DebajitKumarPhukan/groq-java-sdk) ![Maven Central Version](https://img.shields.io/maven-central/v/io.github.debajitkumarphukan/groq-java-sdk) ![Endpoint Badge](https://img.shields.io/endpoint?url=https%3A%2F%2Fgist.github.com%2FDebajitKumarPhukan%2Fefb21c4d837a7ce49ba999f054185308&label=JUnit)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/DebajitKumarPhukan/groq-java-sdk) ![Maven Central Version](https://img.shields.io/maven-central/v/io.github.debajitkumarphukan/groq-java-sdk) ![Coverage](.github/badges/jacoco.svg)
 
 A modern, type-safe Java SDK for interacting with the Groq API, providing seamless access to large language models with ultra-low latency inference.
 
-
 ## Overview
 
-The Groq Java SDK is a comprehensive client library that enables Java developers to easily integrate with Groq's high-performance inference engine. It provides type-safe interfaces for all Groq API endpoints including chat completions, embeddings, audio processing, batch operations, and file management.
+The Groq Java SDK is a comprehensive client library that enables Java developers to easily integrate with Groq's high-performance inference engine. It provides type-safe interfaces for all Groq API endpoints including chat completions, embeddings, audio processing, batch operations, file management, Response API, and MCP (Model Context Protocol) operations.
 
 ### Key Features
 
@@ -16,6 +15,8 @@ The Groq Java SDK is a comprehensive client library that enables Java developers
 - 🎯 **Comprehensive Coverage**: Support for all Groq API endpoints
 - 🛠️ **Production Ready**: Built-in error handling, logging, and retry mechanisms
 - 📦 **Zero Dependencies**: Minimal external dependencies
+- 🧠 **Advanced Reasoning**: Response API with reasoning capabilities
+- 🔌 **MCP Tool Integration**: MCP protocol for external tool integration
 
 ## Quick Start
 
@@ -27,13 +28,13 @@ The Groq Java SDK is a comprehensive client library that enables Java developers
 <dependency>
     <groupId>io.github.debajitkumarphukan</groupId>
     <artifactId>groq-java-sdk</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.4</version>
 </dependency>
 ```
 #### Gradle Dependency
 
 ```xml
-implementation group: 'io.github.debajitkumarphukan', name: 'groq-java-sdk', version: '1.0.0'
+implementation group: 'io.github.debajitkumarphukan', name: 'groq-java-sdk', version: '1.0.4'
 ```
 ### Basic Usage
 
@@ -145,6 +146,95 @@ if (response.isSuccessful()) {
 // Force the model to use a specific tool
 ChatNamedToolChoice forcedChoice = new ChatNamedToolChoice("calculate");
 request.setToolChoice(forcedChoice); // Must use the calculator tool
+```
+#### Response API with Reasoning
+```java
+import com.groq.sdk.models.responses.ResponseRequest;
+import com.groq.sdk.models.responses.ReasoningConfig;
+
+// Create response with reasoning
+ResponseRequest request = new ResponseRequest("openai/gpt-oss-20b", "How are AI models trained? Be brief.");
+request.setReasoning(new ReasoningConfig("low")); // low, medium, or high effort
+request.setTemperature(1.0);
+request.setMaxOutputTokens(500);
+
+GroqResponse<Response> response = client.responses().create(request);
+
+if (response.isSuccessful()) {
+    Response resp = response.getData();
+    
+    // Process different output types
+    for (ResponseOutput output : resp.getOutput()) {
+        if (output instanceof ReasoningOutput) {
+            ReasoningOutput reasoning = (ReasoningOutput) output;
+            System.out.println("Reasoning: " + reasoning.getContent().get(0).getText());
+        } else if (output instanceof MessageOutput) {
+            MessageOutput message = (MessageOutput) output;
+            System.out.println("Final Response: " + message.getContent().get(0).getText());
+        }
+    }
+}
+```
+#### Response API with Code Interpreter and Browser Search
+```java
+import com.groq.sdk.models.chat.ChatTool;
+
+// Create code interpreter tool
+ChatTool codeInterpreter = new ChatTool();
+codeInterpreter.setType("code_interpreter");
+
+// Create browser search tool  
+ChatTool browserSearch = new ChatTool();
+browserSearch.setType("browser_search");
+
+// Create request with multiple tools
+ResponseRequest request = new ResponseRequest("openai/gpt-oss-20b", 
+    "What's the current weather in San Francisco and calculate the area of a circle with radius 5?");
+request.setToolChoice("required");
+request.setChatTools(Arrays.asList(codeInterpreter, browserSearch));
+
+GroqResponse<Response> response = client.responses().create(request);
+```
+#### MCP Operations with External Tools
+```java
+import com.groq.sdk.models.mcp.MCPToolDefinition;
+
+// Create MCP tool definition
+MCPToolDefinition firecrawlTool = new MCPToolDefinition(
+    "firecrawl",
+    "Web scraping and content extraction",
+    "https://mcp.firecrawl.dev/<APIKEY>/v2/mcp",
+    "never"
+);
+
+// Add authentication headers if needed
+firecrawlTool.setBearerToken("your-firecrawl-token");
+
+// Create MCP response
+GroqResponse<Response> response = client.mcp().createResponse(
+    "openai/gpt-oss-120b",
+    "What are the latest AI research papers?",
+    firecrawlTool
+);
+
+if (response.isSuccessful()) {
+    Response resp = response.getData();
+    
+    // Process MCP outputs
+    for (ResponseOutput output : resp.getOutput()) {
+        if (output instanceof MCPListToolsOutput) {
+            MCPListToolsOutput toolsOutput = (MCPListToolsOutput) output;
+            System.out.println("Available tools: " + toolsOutput.getTools().size());
+        } else if (output instanceof MCPCallOutput) {
+            MCPCallOutput callOutput = (MCPCallOutput) output;
+            System.out.println("Tool call: " + callOutput.getName());
+            System.out.println("Output: " + callOutput.getOutput());
+        } else if (output instanceof MessageOutput) {
+            MessageOutput message = (MessageOutput) output;
+            System.out.println("Final response: " + message.getContent().get(0).getText());
+        }
+    }
+}
 ```
 #### Embeddings Generation [Preview]
 ```java
@@ -333,6 +423,24 @@ groq-java-sdk/
 │   │   ├── models/                  # Model management
 │   │   │   ├── Model.java
 │   │   │   └── ModelList.java
+│   │   ├── responses/               # Response API models
+│   │   │   ├── Response.java
+│   │   │   ├── ResponseRequest.java
+│   │   │   ├── ResponseOutput.java
+│   │   │   ├── ReasoningOutput.java
+│   │   │   ├── ReasoningConfig.java
+│   │   │   ├── ReasoningContent.java
+│   │   │   ├── MessageOutput.java
+│   │   │   ├── MessageContent.java
+│   │   │   ├── MessageInput.java
+│   │   │   ├── Usage.java
+│   │   │   └── UsageDetails.java
+│   │   ├── mcp/                     # MCP models
+│   │   │   ├── MCPToolDefinition.java
+│   │   │   ├── MCPTool.java
+│   │   │   ├── MCPListToolsOutput.java
+│   │   │   ├── MCPCallOutput.java
+│   │   │   └── ReasoningOutput.java
 │   │   └── GroqResponse.java        # Generic API response wrapper
 │   ├── resources/                   # API resource classes
 │   │   ├── ChatResource.java        # Chat completion operations
@@ -341,13 +449,15 @@ groq-java-sdk/
 │   │   ├── VisionResource.java      # Vision operations
 │   │   ├── BatchesResource.java     # Batch operations
 │   │   ├── FilesResource.java       # File operations
-│   │   └── ModelsResource.java      # Model operations
+│   │   ├── ModelsResource.java      # Model operations
+│   │   ├── ResponseResource.java    # Response API operations
+│   │   └── MCPResource.java         # MCP operations
 │   ├── exceptions/
 │   │   └── GroqException.java       # Custom exception types
 │   └── util/
 │       └── JsonUtils.java           # JSON serialization utilities
 ├── examples/
-│   └── Example.java                    # Comprehensive usage examples
+│   └── Example.java                 # Comprehensive usage examples
 └── pom.xml                          # Maven build configuration
 ```
 ### API Resources
@@ -366,36 +476,62 @@ groq-java-sdk/
 
 * `client.models()` - Model information and listing
 
+* `client.responses()` - Response API with reasoning, code interpreter, and browser search
+
+* `client.mcp()` - MCP operations with external tool integration
+
 #### Audio Features
-* Text-to-Speech (TTS): Convert text to natural-sounding speech using PlayAI voices
+* **Text-to-Speech (TTS):** Convert text to natural-sounding speech using PlayAI voices
 
-* Speech-to-Text: Transcribe audio to text with Whisper models
+* **Speech-to-Text:** Transcribe audio to text with Whisper models
 
-* Audio Translation: Convert audio in any language to English text
+* **Audio Translation:** Convert audio in any language to English text
 
-* Multiple Formats: Support for MP3, WAV, FLAC, and other audio formats
+* **Multiple Formats:** Support for MP3, WAV, FLAC, and other audio formats
 
-* Voice Selection: 25+ high-quality PlayAI voices with different accents and styles
+* **Voice Selection:** 25+ high-quality PlayAI voices with different accents and styles
 
-* Speed Control: Adjust speech speed from 0.25x to 4.0x normal speed
+* **Speed Control:** Adjust speech speed from 0.25x to 4.0x normal speed
 
 #### Vision Features
-* Multimodal Analysis: Combine text and images in single requests
+* **Multimodal Analysis:** Combine text and images in single requests
 
-* Multiple Input Types: Support for remote URLs, local files, and image bytes
+* **Multiple Input Types:** Support for remote URLs, local files, and image bytes
 
-* Detailed Descriptions: Get comprehensive analysis of image content
+* **Detailed Descriptions:** Get comprehensive analysis of image content
 
-* Text Extraction: Read and interpret text within images
+* **Text Extraction:** Read and interpret text within images
 
-* Object Recognition: Identify objects, scenes, and activities in images
+* **Object Recognition:** Identify objects, scenes, and activities in images
 
-#### Tool Calling Features
-* Automatic Tool Selection: Model chooses which tools to use based on context
+#### Response API Features
+* **Advanced Reasoning:** Show step-by-step reasoning with configurable effort levels
 
-* Parallel Tool Calls: Multiple tools can be called simultaneously
+* **Code Interpreter:** Some models and systems on Groq have native support for automatic code execution, allowing them to perform calculations, run code snippets, and solve computational problems in real-time
 
-* Function Definitions: JSON Schema based function definitions
+* **Browser Search:** Some models on Groq have built-in support for interactive browser search, providing a more comprehensive approach to accessing real-time web content than traditional web search. Search the web for real-time information
+
+* **Multiple Output Types:** Handle reasoning, message, and tool outputs in single response
+
+* **Complex Conversations:** Support for multi-message inputs with system prompts
+
+#### MCP Tool Calling Features
+* **External Tool Integration:** Connect with external services via MCP protocol
+
+* **Tool Discovery:** Automatic discovery of available tools from MCP servers
+
+* **Authentication Support:** Bearer tokens, API keys, and custom headers
+
+* **Multiple Tools:** Support for multiple MCP tools in single request
+
+* **Tool Output Processing:** Structured handling of tool call results
+
+#### Traditional Tool Calling Features
+* **Automatic Tool Selection:** Model chooses which tools to use based on context
+
+* **Parallel Tool Calls:** Multiple tools can be called simultaneously
+
+* **Function Definitions:** JSON Schema based function definitions
 
 #### Configuration Options
 ```java

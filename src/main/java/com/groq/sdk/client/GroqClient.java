@@ -12,7 +12,9 @@ import com.groq.sdk.resources.BatchesResource;
 import com.groq.sdk.resources.ChatResource;
 import com.groq.sdk.resources.EmbeddingsResource;
 import com.groq.sdk.resources.FilesResource;
+import com.groq.sdk.resources.MCPResource;
 import com.groq.sdk.resources.ModelsResource;
+import com.groq.sdk.resources.ResponseResource;
 import com.groq.sdk.resources.VisionResource;
 
 import okhttp3.MultipartBody;
@@ -56,6 +58,8 @@ public class GroqClient extends BaseClient {
     private final BatchesResource batches;
     private final FilesResource files;
     private final VisionResource vision;
+    private final MCPResource mcp;
+    private final ResponseResource responses;
     
     /**
      * Constructs a new GroqClient with the specified builder configuration.
@@ -71,6 +75,8 @@ public class GroqClient extends BaseClient {
         this.batches = new BatchesResource(this);
         this.files = new FilesResource(this);
         this.vision = new VisionResource(this);
+        this.mcp = new MCPResource(this);
+        this.responses = new ResponseResource(this);
     }
     
     /**
@@ -141,6 +147,27 @@ public class GroqClient extends BaseClient {
      */
     public VisionResource vision() {
         return vision;
+    }
+    
+    /**
+     * Gets the MCP resource for performing MCP operations with tool integration.
+     * 
+     * @return the MCP resource instance
+     * @see MCPResource
+     */
+    public MCPResource mcp() {
+        return mcp;
+    }
+    
+    /**
+     * Gets the response resource for performing Response API operations.
+     * Supports reasoning, code interpreter, browser search, and MCP tools.
+     * 
+     * @return the response resource instance
+     * @see ResponseResource
+     */
+    public ResponseResource responses() {
+        return responses;
     }
     
     /**
@@ -367,12 +394,10 @@ public class GroqClient extends BaseClient {
     public String toString() {
         return "GroqClient{" +
                 "baseUrl='" + baseUrl + '\'' +
-                ", resources=[chat, models, embeddings, audio, batches, files, vision]" +
+                ", resources=[chat, models, embeddings, audio, batches, files, vision, mcp, responses]" +
                 '}';
     }
-    
-    // ========== NEW METHODS ADDED FOR BINARY RESPONSE HANDLING ==========
-    
+        
     /**
      * Gets the underlying HTTP client for direct request handling.
      * 

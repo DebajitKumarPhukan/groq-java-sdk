@@ -31,8 +31,15 @@ jobs:
         run: mvn clean package
       - name: Run Maven tests and generate reports
         run: mvn test
-      - name: Update code coverage results
+      - name: Extract code coverage results
         uses: cicirello/jacoco-badge-generator@v2
+      - name: Update the code coverage results
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add .github/badges/jacoco.svg
+          git commit -m "Update code coverage" || echo "No changes to commit"
+          git push
 
       - name: Local Upload build artifacts
         uses: actions/upload-artifact@v4

@@ -22,9 +22,7 @@ jobs:
       - name: Run Maven tests and generate reports
         run: mvn test
       - name: Update code coverage results
-      uses: cicirello/jacoco-badge-generator@v2
-      with:
-        generate-branches-badge: true
+        uses: cicirello/jacoco-badge-generator@v2
 
       - name: Local Upload build artifacts
         uses: actions/upload-artifact@v4

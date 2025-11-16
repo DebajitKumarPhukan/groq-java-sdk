@@ -4,6 +4,16 @@ on:
   push:
     branches:
       - 'feature/**'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+        - test
+        - staging
 
 jobs:
   build:
